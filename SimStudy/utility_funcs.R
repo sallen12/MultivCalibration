@@ -86,6 +86,7 @@ plot_hist <- function(rank, n_bins, title = NULL, ylab = "Rel. Freq.", ymax = 0.
   
   rank_freq <- sapply(1:n_bins, function(i) mean(rank == i, na.rm = T))
   df <- data.frame(freq = rank_freq, rank = as.factor(1:n_bins))
+  df$freq[df$freq > ymax] <- ymax
   
   hist_plot <- ggplot(df, aes(x = rank, y = freq)) + geom_bar(stat = "identity") +
     geom_hline(aes(yintercept = 1/n_bins), col="red", lty = "dashed") + 
@@ -134,13 +135,15 @@ plot_rank <- function(y, x, w_mat = NULL, ylab = F, fignum = NULL) {
   
   if (!is.null(fignum)) {
     filedir <- "Figures/fig_"
-    ggsave(paste(filedir, fignum, "i.pdf", sep=""), plot_mvr, width=2.15, height=1.8, device="pdf")
-    ggsave(paste(filedir, fignum, "ii.pdf", sep=""), plot_avr, width=2.15, height=1.8, device="pdf")
-    ggsave(paste(filedir, fignum, "iii.pdf", sep=""), plot_bdr, width=2.15, height=1.8, device="pdf")
-    ggsave(paste(filedir, fignum, "iv.pdf", sep=""), plot_esr, width=2.15, height=1.8, device="pdf")
-    ggsave(paste(filedir, fignum, "v.pdf", sep=""), plot_loc, width=2.15, height=1.8, device="pdf")
-    ggsave(paste(filedir, fignum, "vi.pdf", sep=""), plot_sc, width=2.15, height=1.8, device="pdf")
-    ggsave(paste(filedir, fignum, "vii.pdf", sep=""), plot_dep, width=2.15, height=1.8, device="pdf")
+    width <- 1.6
+    height <- 1.4
+    ggsave(paste(filedir, fignum, "i.pdf", sep=""), plot_mvr, width=width, height=height, device="pdf")
+    ggsave(paste(filedir, fignum, "ii.pdf", sep=""), plot_avr, width=width, height=height, device="pdf")
+    ggsave(paste(filedir, fignum, "iii.pdf", sep=""), plot_bdr, width=width, height=height, device="pdf")
+    ggsave(paste(filedir, fignum, "iv.pdf", sep=""), plot_esr, width=width, height=height, device="pdf")
+    ggsave(paste(filedir, fignum, "v.pdf", sep=""), plot_loc, width=width, height=height, device="pdf")
+    ggsave(paste(filedir, fignum, "vi.pdf", sep=""), plot_sc, width=width, height=height, device="pdf")
+    ggsave(paste(filedir, fignum, "vii.pdf", sep=""), plot_dep, width=width, height=height, device="pdf")
   } else {
     gridExtra::grid.arrange(plot_mvr, plot_avr, plot_bdr, plot_esr, plot_loc, plot_sc, plot_dep, ncol = 1)
   }
