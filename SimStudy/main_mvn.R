@@ -17,6 +17,8 @@ phi <- 3
 n <- 10000
 M <- 20
 
+lag <- 1 # lag for variogram prerank
+w_mat <- matrix(as.numeric(abs(outer(1:d, 1:d, FUN = "-")) <= lag), nrow = d)
 
 ### observations
 

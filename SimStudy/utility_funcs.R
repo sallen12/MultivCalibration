@@ -101,16 +101,12 @@ plot_hist <- function(rank, n_bins, title = NULL, ylab = "Rel. Freq.", ymax = 0.
 }
 
 # function to plot and save results
-plot_rank <- function(y, x, w_mat = NULL, lag = 1, ylab = F, fignum = NULL) {
+plot_rank <- function(y, x, w_mat = NULL, ylab = F, fignum = NULL) {
   
   # calculate weight matrix for variogram prerank
   if (is.null(w_mat)) {
     d <- ncol(y)
-    if (!is.null(lag)) {
-      w_mat <- matrix(as.numeric(abs(outer(1:d, 1:d, FUN = "-")) <= lag), nrow = d)
-    } else {
-      w_mat <- matrix(1, nrow = d, ncol = d)
-    }
+    w_mat <- matrix(1, nrow = d, ncol = d)
   }
   
   rank_df <- data.frame(mvr = sapply(1:n, function(i) mv_rank(y[i, ], x[i, , ])),

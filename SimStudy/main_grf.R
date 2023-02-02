@@ -17,6 +17,9 @@ phi <- 3
 n <- 10000
 M <- 20
 
+nbhd_size <- 1 # neighbourhood size for variogram prerank
+coords <- expand.grid(1:sqrt(d), 1:sqrt(d))
+w_mat <- sapply(1:d, function(i) sapply(1:d, function(j) as.numeric(max(abs(coords[i, ] - coords[j, ])) <= nbhd_size)))
 
 ### observations
 
