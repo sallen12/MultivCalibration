@@ -12,7 +12,7 @@ av_rank <- function(y, x) {
   dat <- cbind(y, x)
   d <- length(y)
   M <- ncol(dat)
-  c <- sapply(1:M, function(i) sapply(1:d, function(l) sum(sapply(1:M, function(j) dat[l, j] <= dat[l, i]))))
+  c <- sapply(1:M, function(i) sapply(1:d, function(l) sum(dat[l, ] <= dat[l, i])))
   rank <- colMeans(c)
   rank_y <- sum(rank[1] > rank[2:M]) + 1 + sample(0:sum(rank[1] == rank[2:M]), 1)
   return(rank_y)
@@ -21,8 +21,9 @@ av_rank <- function(y, x) {
 bd_rank <- function(y, x) {
   dat <- cbind(y, x)
   M <- ncol(dat)
-  c <- sapply(1:M, function(i) sapply(1:d, function(l) sum(sapply(1:M, function(j) dat[l, j] <= dat[l, i]))))
-  rank <- rowMeans(sapply(1:d, function(l) (M - c[l, ])*(c[l, ] - 1)))
+  c <- sapply(1:M, function(i) sapply(1:d, function(l) sum(dat[l, ] <= dat[l, i])))
+  rank <- rowMeans(sapply(1:d, function(l) 
+    c[l, ]*(M - c[l, ]) + (c[l, ] - 1)*sapply(1:M, function(i) sum(c[l, ] == c[l, i]))))
   rank_y <- sum(rank[1] > rank[2:M]) + 1 + sample(0:sum(rank[1] == rank[2:M]), 1)
   return(rank_y)
 }

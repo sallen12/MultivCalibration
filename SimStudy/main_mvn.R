@@ -1,13 +1,15 @@
 ##### Multivariate normal simulation study
 
+
+
 ### set up
 
 library(MASS)
 library(ggplot2)
 library(Rcpp)
 
-source("~/R/MultivCal/SimStudy/prerank_funcs.R")
-sourceCpp("~/R/MultivCal/SimStudy/variogram_func.cpp") # not used in vg1_rank
+source("prerank_funcs.R")
+sourceCpp("variogram_func.cpp") # not used in vg1_rank
 
 # function to plot and save results
 plot_rank <- function(y, x, ylab = F, fignum = NULL) {
@@ -36,7 +38,7 @@ plot_rank <- function(y, x, ylab = F, fignum = NULL) {
   plot_dep <- plot_hist(rank_df$dep, M + 1, ylab = lab_vec[7], axis = F)
   
   if (!is.null(fignum)) {
-    filedir <- "~/R/MultivCal/SimStudy/Figures/fig_1"
+    filedir <- "Figures/fig_1"
     ggsave(paste(filedir, fignum, "i.pdf", sep=""), plot_mvr, width=2.15, height=1.8, device="pdf")
     ggsave(paste(filedir, fignum, "ii.pdf", sep=""), plot_avr, width=2.15, height=1.8, device="pdf")
     ggsave(paste(filedir, fignum, "iii.pdf", sep=""), plot_bdr, width=2.15, height=1.8, device="pdf")
