@@ -40,12 +40,12 @@ y <- mvrnorm(n, mu = mu_y, Sigma = Sig_y)
 # a
 mu_x <- rep(-0.5, d)
 x <- replicate(M, mvrnorm(n, mu = mu_x, Sigma = Sig_y))
-plot_rank(y, x, ylab = T, fignum = "1a")
+plot_rank(y, x, w_mat, ylab = T, fignum = "1a")
 
 # b
 mu_x <- rep(0.5, d)
 x <- replicate(M, mvrnorm(n, mu = mu_x, Sigma = Sig_y))
-plot_rank(y, x, fignum = "1b")
+plot_rank(y, x, w_mat, fignum = "1b")
 
 
 ## Type 2: errors in the variance
@@ -54,13 +54,13 @@ plot_rank(y, x, fignum = "1b")
 sig2_x <- 0.65
 Sig_x <- Sig_y*sig2_x
 x <- replicate(M, mvrnorm(n, mu = mu_y, Sigma = Sig_x))
-plot_rank(y, x, fignum = "1c")
+plot_rank(y, x, w_mat, fignum = "1c")
 
 # b
 sig2_x <- 1.35
 Sig_x <- Sig_y*sig2_x
 x <- replicate(M, mvrnorm(n, mu = mu_y, Sigma = Sig_x))
-plot_rank(y, x, fignum = "1d")
+plot_rank(y, x, w_mat, fignum = "1d")
 
 
 ## Type 3: errors in the correlation
@@ -74,7 +74,7 @@ for (i in 1:d) {
   }
 }  
 x <- replicate(M, mvrnorm(n, mu = mu_y, Sigma = Sig_x))
-plot_rank(y, x, fignum = "1e")
+plot_rank(y, x, w_mat, fignum = "1e")
 
 # b
 phi_x <- 5
@@ -85,5 +85,5 @@ for (i in 1:d) {
   }
 }  
 x <- replicate(M, mvrnorm(n, mu = mu_y, Sigma = Sig_x))
-plot_rank(y, x, fignum = "1f")
+plot_rank(y, x, w_mat, fignum = "1f")
 
