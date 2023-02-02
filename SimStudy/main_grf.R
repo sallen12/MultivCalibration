@@ -6,10 +6,9 @@
 
 library(geoR)
 library(ggplot2)
-library(Rcpp)
 
 source("utility_funcs.R")
-sourceCpp("variogram_func.cpp") # not used in vg1_rank
+Rcpp::sourceCpp("variogram_func.cpp")
 
 d <- 2500
 sig2 <- 1
