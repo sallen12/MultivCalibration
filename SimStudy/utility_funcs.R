@@ -59,17 +59,18 @@ var_rank <- function(y, x) {
 }
 
 # variogram rank
-vg_rank <- function(y, x, p = 0.5) {
-  g_y <- vsC(y, p)
-  g_x <- apply(x, 2, vsC, p)
-  rank_y <- get_rank(c(g_y, g_x))
-  return(rank_y)
-}
-
-# variogram order 1 rank
-vg1_rank <- function(y, x, p = 0.5) {
-  g_y <- sum(abs(diff(y))^p)
-  g_x <- apply(x, 2, function(z) sum(abs(diff(z))^p))
+vg_rank <- function(y, x, w_mat = NULL, lag = NULL, p = 0.5) {
+  if (is.null(w_mat)) {
+    d <- length(y)
+    if (!is.null(lag)) {
+      
+      w_mat <- matrix(as.numeric(abs(outer(1:d, 1:d, FUN = "-")) <= lag), nrow = d)
+    } else {
+      w_mat <- matrix(1, nrow = d, ncol = d)
+    }
+  }
+  g_y <- vario(y, w_mat, p)
+  g_x <- apply(x, 2, vario, w_mat, p)
   rank_y <- get_rank(c(g_y, g_x))
   return(rank_y)
 }
@@ -105,7 +106,7 @@ plot_hist <- function(rank, n_bins, title = NULL, ylab = "Rel. Freq.", ymax = 0.
 }
 
 # function to plot and save results
-plot_rank <- function(y, x, ylab = F, fignum = NULL) {
+plot_rank <- function(y, x, lag = 1, ylab = F, fignum = NULL) {
   
   rank_df <- data.frame(mvr = sapply(1:n, function(i) mv_rank(y[i, ], x[i, , ])),
                         avr = sapply(1:n, function(i) av_rank(y[i, ], x[i, , ])),
@@ -113,7 +114,7 @@ plot_rank <- function(y, x, ylab = F, fignum = NULL) {
                         esr = sapply(1:n, function(i) es_rank(y[i, ], x[i, , ])),
                         loc = sapply(1:n, function(i) mean_rank(y[i, ], x[i, , ])),
                         sc = sapply(1:n, function(i) var_rank(y[i, ], x[i, , ])),
-                        dep = sapply(1:n, function(i) vg1_rank(y[i, ], x[i, , ])))
+                        dep = sapply(1:n, function(i) vg_rank(y[i, ], x[i, , ], lag = lag)))
   
   if (ylab) {
     lab_vec <- c("Multivariate", "Average", "Band-depth", "Energy score", 
