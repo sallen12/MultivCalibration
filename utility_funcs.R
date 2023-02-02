@@ -5,18 +5,12 @@
 ################################################################################
 ## prerank functions
 
-# function to get rank from preranks
-get_rank <- function(preranks, obs_pos = 1) {
-  sum(preranks[obs_pos] > preranks[-obs_pos]) + 1 + 
-    sample(0:sum(preranks[obs_pos] == preranks[-obs_pos]), 1)
-}
-
 # multivariate rank
 mv_rank <- function(y, x) {
   dat <- cbind(y, x)
   M <- ncol(dat)
-  rank <- sapply(1:M, function(i) sum(sapply(1:M, function(j) all(dat[, j] <= dat[, i]))))
-  rank_y <- get_rank(rank)
+  prerank <- sapply(1:M, function(i) sum(sapply(1:M, function(j) all(dat[, j] <= dat[, i]))))
+  rank_y <- rank(prerank, ties.method = "random")[1]
   return(rank_y)
 }
 
@@ -24,21 +18,20 @@ mv_rank <- function(y, x) {
 av_rank <- function(y, x) {
   dat <- cbind(y, x)
   d <- length(y)
-  M <- ncol(dat)
-  c <- sapply(1:M, function(i) sapply(1:d, function(l) sum(dat[l, ] <= dat[l, i])))
-  rank <- colMeans(c)
-  rank_y <- get_rank(rank)
+  c <- sapply(1:d, function(l) rank(dat[l, ]))
+  prerank <- rowMeans(c)
+  rank_y <- rank(prerank, ties.method = "random")[1]
   return(rank_y)
 }
 
 # band-depth rank
 bd_rank <- function(y, x) {
   dat <- cbind(y, x)
+  d <- length(y)
   M <- ncol(dat)
-  c <- sapply(1:M, function(i) sapply(1:d, function(l) sum(dat[l, ] <= dat[l, i])))
-  rank <- rowMeans(sapply(1:d, function(l) 
-    c[l, ]*(M - c[l, ]) + (c[l, ] - 1)*sapply(1:M, function(i) sum(c[l, ] == c[l, i]))))
-  rank_y <- get_rank(rank)
+  c <- sapply(1:d, function(l) rank(dat[l, ]))
+  prerank <- rowMeans((M - c)*(c - 1))
+  rank_y <- rank(prerank, ties.method = "random")[1]
   return(rank_y)
 }
 
@@ -46,7 +39,7 @@ bd_rank <- function(y, x) {
 mean_rank <- function(y, x) {
   g_y <- mean(y)
   g_x <- colMeans(x)
-  rank_y <- get_rank(c(g_y, g_x))
+  rank_y <- rank(c(g_y, g_x), ties.method = "random")[1]
   return(rank_y)
 }
 
@@ -54,7 +47,7 @@ mean_rank <- function(y, x) {
 var_rank <- function(y, x) {
   g_y <- var(y)
   g_x <- apply(x, 2, var)
-  rank_y <- get_rank(c(g_y, g_x))
+  rank_y <- rank(c(g_y, g_x), ties.method = "random")[1]
   return(rank_y)
 }
 
@@ -66,7 +59,7 @@ vg_rank <- function(y, x, w_mat = NULL, p = 0.5) {
   }
   g_y <- vario(y, w_mat, p)
   g_x <- apply(x, 2, vario, w_mat, p)
-  rank_y <- get_rank(c(g_y, g_x))
+  rank_y <- rank(c(g_y, g_x), ties.method = "random")[1]
   return(rank_y)
 }
 
@@ -74,7 +67,7 @@ vg_rank <- function(y, x, w_mat = NULL, p = 0.5) {
 es_rank <- function(y, x) {
   g_y <- scoringRules::es_sample(y, x)
   g_x <- apply(x, 2, function(z) scoringRules::es_sample(z, x))
-  rank_y <- get_rank(c(g_y, g_x))
+  rank_y <- rank(c(g_y, g_x), ties.method = "random")[1]
   return(rank_y)
 }
 
@@ -109,6 +102,9 @@ plot_rank <- function(y, x, w_mat = NULL, ylab = F, fignum = NULL) {
     d <- ncol(y)
     w_mat <- matrix(1, nrow = d, ncol = d)
   }
+  
+  n <- nrow(y)
+  M <- dim(x)[3]
   
   rank_df <- data.frame(mvr = sapply(1:n, function(i) mv_rank(y[i, ], x[i, , ])),
                         avr = sapply(1:n, function(i) av_rank(y[i, ], x[i, , ])),
@@ -160,4 +156,22 @@ plot_grf <- function(coords, z) {
           axis.text = element_blank(), 
           axis.ticks = element_blank(), 
           legend.position = "none")
+}
+
+# function to plot fields over Europe
+plot_map <- function(lons, lats, z, title = NULL){
+  
+  world <- map_data("world")
+  ind <- (world$long >= min(lons) & world$long < max(lons)) & (world$lat >= min(lats) & world$lat < max(lats))
+  world <- world[ind, ]
+  
+  df <- data.frame(lat = rep(lats, each = length(lons)), lon = rep(lons, length(lats)), z = z)
+  ggplot() + geom_contour_filled(data = df, aes(lon, lat, z = z), bins = 100) +
+    geom_polygon(data = world, aes(x = long, y = lat, group = group), alpha = 0, colour = "black") +
+    scale_x_continuous(expand = c(0, 0)) + 
+    scale_y_continuous(expand = c(0, 0)) +
+    #coord_map(projection = "lambert", parameters = c(30, 40)) + 
+    theme_void() + theme(legend.position = "None", 
+                         panel.border = element_rect(colour = "black", fill = NA, linewidth = 1)) +
+    ggtitle(title)
 }
