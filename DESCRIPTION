@@ -1,0 +1,13 @@
+Package: MultivCalibration
+Type: Package
+Title: Evaluate the calibration of multivariate probabilistic forecasts
+Version: 0.1.0
+Author: person(given = "Sam", family = "Allen", email = "sam.allen@unibe.ch", role = c("cre", "aut")
+Description: An R package that provides tools to evaluate the calibration of 
+    multivariate probabilistic forecasts. This includes suggested pre-rank functions
+    to condense multivariate forecasts to univariate forecasts, as well as tools
+    to visualise the resulting calibration using multivariate rank histograms. 
+    Tools to test for the flatness of a histogram are also included.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
