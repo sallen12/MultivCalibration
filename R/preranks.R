@@ -4,15 +4,16 @@
 #'
 #' @param y multivariate observation (numeric vector of length d).
 #' @param dat samples from multivariate forecast distribution (numeric matrix with d rows).
-#' @param prerank the pre-rank function to be used. See details for a list of options.
+#' @param prerank the pre-rank function to be used. This is either a string from
+#'  a list of possible options (see details below), or a function.
 #' @param return_rank logical specifying whether the rank should be returned
 #'  (rather than the vector of pre-ranks). Default is TRUE.
-#' @param t threshold for the FTE pre-rank function (single numeric value).
+#' @param ... additional parameters for the pre-rank functions.
 #'
 #' @return
 #' Rank of the pre-rank transformed observation among the forecast sample (if
-#' \code{prerank = F}), or a vector of pre-ranks corresponding to the observation
-#' and sample members (if \code{prerank = T}).
+#' \code{return_rank = T}), or a vector of pre-ranks corresponding to the observation
+#' and sample members (if \code{return_rank = F}).
 #'
 #' @references
 #'
@@ -33,14 +34,32 @@
 #' @author Sam Allen
 #'
 #' @details
-#' The pre-rank functions currently included are the multivariate rank
+#' When assessing multivariate calibration, it is common to convert the multivariate
+#' forecasts and observations into univariate objects, and then apply univariate
+#' methods. In the context of multivariate calibration, the function used to
+#' perform this transformation is often called a pre-rank function.
+#'
+#' The function \code{get_prerank()} can be used to apply this transformation, and
+#' to extract the rank of the transformed observation among the transformed
+#' samples from the forecast (i.e. ensemble members).
+#'
+#' The argument \code{prerank} specifies which pre-rank function to use. This can
+#' either be a string corresponding to one of several in-built options, or it can
+#' be a user-specified function.
+#'
+#' The in-built pre-rank functions currently available are the multivariate rank
 #' (\code{prerank = "multivariate_rank}), the average rank (\code{"average_rank"}),
 #' the band-depth rank (\code{"band_depth"}), the mean (\code{"mean"}), the variance
 #' (\code{"variance"}), the energy score (\code{"energy_score"}), and the
 #' fraction of threshold exceedances (\code{fte_rank}). See references for details.
-#'
-#' Pre-rank functions will also be added for the variogram, isotropy, and
+#' Pre-rank functions will later be added for the variogram, isotropy, and
 #' minimum spanning tree.
+#'
+#' If \code{prerank} is a function, it should convert a vector of dimension d, to
+#' a single numeric value. Checks are in place to ensure this is satisfied. The
+#' \code{prerank} function could also take additional inputs, in which case these
+#' inputs should be included as additional arguments in the function. See examples
+#' below.
 #'
 #' @examples
 #' d <- 5
@@ -83,15 +102,27 @@
 #' # forecast's under-estimate the variance, so the observation often has a higher variance rank
 #' # when evaluated using the variance pre-rank function
 #'
+#' # custom pre-rank function
+#' dat <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
+#' prerank <- function(x) mean((x - mean(x))^3) # function to quantify skew
+#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = prerank))
+#' barplot(table(mvranks))
+#'
+#' prerank <- function(x, q) mean((x - mean(x))^q) # function to quantify q-th centered moment
+#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = prerank, q = 3))
+#' barplot(table(mvranks))
+#'
 #' @name preranks
 NULL
 
 
 #' @rdname preranks
 #' @export
-get_prerank <- function(y, dat, prerank, return_rank = TRUE, t = NULL) {
-  check_inputs(list(y = y, dat = dat, prerank = prerank, t = t))
-  if (prerank == "multivariate_rank") {
+get_prerank <- function(y, dat, prerank, return_rank = TRUE, ...) {
+  check_inputs(y = y, dat = dat, prerank = prerank, ...)
+  if (is.function(prerank)) {
+    custom_rank(y, dat, prerank, return_rank, ...)
+  } else if (prerank == "multivariate_rank") {
     mv_rank(y, dat, return_rank)
   } else if (prerank == "average_rank") {
     av_rank(y, dat, return_rank)
@@ -109,7 +140,7 @@ get_prerank <- function(y, dat, prerank, return_rank = TRUE, t = NULL) {
 }
 
 # multivariate rank
-mv_rank <- function(y, dat, return_rank = FALSE) {
+mv_rank <- function(y, dat, return_rank = TRUE) {
   S <- cbind(y, dat)
   M <- ncol(S)
   rho <- sapply(1:M, function(i) sum(sapply(1:M, function(j) all(S[, j] <= S[, i]))))
@@ -123,7 +154,7 @@ mv_rank <- function(y, dat, return_rank = FALSE) {
 }
 
 # average rank
-av_rank <- function(y, dat, return_rank = FALSE) {
+av_rank <- function(y, dat, return_rank = TRUE) {
   S <- cbind(y, dat)
   d <- length(y)
   C <- sapply(1:d, function(l) rank(S[l, ]))
@@ -138,7 +169,7 @@ av_rank <- function(y, dat, return_rank = FALSE) {
 }
 
 # band-depth
-bd_rank <- function(y, dat, return_rank = FALSE) {
+bd_rank <- function(y, dat, return_rank = TRUE) {
   S <- cbind(y, dat)
   d <- length(y)
   M <- ncol(S)
@@ -154,51 +185,29 @@ bd_rank <- function(y, dat, return_rank = FALSE) {
 }
 
 # mean
-mean_rank <- function(y, dat, return_rank = FALSE) {
-  g_y <- mean(y)
-  g_dat <- colMeans(dat)
-  rho <- c(g_y, g_dat)
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(dat)))
-  if (return_rank) {
-    rank_y <- rank(rho, ties.method = "random")[1]
-    return(unname(rank_y))
-  } else {
-    return(rho)
-  }
+mean_rank <- function(y, dat, return_rank = TRUE) {
+  custom_rank(y, dat, prerank = mean, return_rank)
 }
 
 # variance
-var_rank <- function(y, dat, return_rank = FALSE) {
-  g_y <- var(y)
-  g_dat <- apply(dat, 2, var)
-  rho <- c(g_y, g_dat)
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(dat)))
-  if (return_rank) {
-    rank_y <- rank(rho, ties.method = "random")[1]
-    return(unname(rank_y))
-  } else {
-    return(rho)
-  }
+var_rank <- function(y, dat, return_rank = TRUE) {
+  custom_rank(y, dat, prerank = var, return_rank)
 }
 
 # energy score
-es_rank <- function(y, dat, return_rank = FALSE) {
-  g_y <- scoringRules::es_sample(y, dat)
-  g_dat <- apply(dat, 2, scoringRules::es_sample, dat = dat)
-  rho <- c(g_y, g_dat)
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(dat)))
-  if (return_rank) {
-    rank_y <- rank(rho, ties.method = "random")[1]
-    return(unname(rank_y))
-  } else {
-    return(rho)
-  }
+es_rank <- function(y, dat, return_rank = TRUE) {
+  custom_rank(y, dat, prerank = scoringRules::es_sample, return_rank)
 }
 
 # fraction of threshold exceedances
-fte_rank <- function(y, dat, t, return_rank = FALSE) {
-  g_y <- sum(y > t)
-  g_dat <- colSums(dat > t)
+fte_rank <- function(y, dat, t, return_rank = TRUE) {
+  custom_rank(y, dat, prerank = sum, return_rank, t = t)
+}
+
+# custom pre-rank function
+custom_rank <- function(y, dat, prerank, return_rank = TRUE, ...) {
+  g_y <- prerank(y, ...)
+  g_dat <- apply(dat, 2, prerank, ...)
   rho <- c(g_y, g_dat)
   names(rho) <- c("obs", sprintf("ens%d", 1:ncol(dat)))
   if (return_rank) {
@@ -208,25 +217,33 @@ fte_rank <- function(y, dat, t, return_rank = FALSE) {
     return(rho)
   }
 }
-
 
 ################################################################################
 # helper functions
 
-# input checks (from scoringRules)
-check_inputs <- function(input) {
-  admissible_preranks <- c("multivariate_rank", "average_rank", "band_depth",
-                           "mean", "variance", "energy_score", "FTE")
-  if (!(input$prerank %in% admissible_preranks)) {
-    stop(paste("'prerank' must be one of:", paste(admissible_preranks, collapse = ", ")))
+# input checks (adapted from scoringRules)
+check_inputs <- function (y, dat, prerank, ...) {
+  if (!is.numeric(y)) stop("'y' is not numeric")
+  if (!is.numeric(dat)) stop("'dat' is not numeric")
+  if (!is.vector(y)) stop("'y' is not a vector")
+  if (!is.matrix(dat)) stop("'dat' is not a matrix ")
+  if (length(y) != dim(dat)[1]) stop("Dimensions of 'y' and 'dat' do not match")
+
+  if (is.function(prerank)) {
+    g_y <- prerank(y, ...)
+    g_dat <- apply(dat, 2, prerank, ...)
+    if (!is.numeric(g_y) || !is.numeric(g_dat)) stop("The pre-rank function returns non-numeric values")
+    if (length(g_y) > 1) stop("The pre-rank function does not return a single value")
+  } else{
+    admissible_preranks <- c("multivariate_rank", "average_rank", "band_depth",
+                             "mean", "variance", "energy_score", "FTE")
+    if (!(prerank %in% admissible_preranks)) {
+      stop(paste("'prerank' must be one of:", paste(admissible_preranks, collapse = ", ")))
+    }
+    if (prerank == "FTE") {
+      if (is.null(t)) stop("The FTE pre-rank function requires an additional argument 't'")
+      if (!is.numeric(t)) stop("'t' is not numeric")
+      if (length(t) > 1) stop("'t' must be a single numeric value")
+    }
   }
-  if (input$prerank == "FTE") {
-    if (!is.numeric(input$t)) stop("'t' is not numeric")
-    if (length(t) > 1) stop("'t' must be a single numeric value")
-  }
-  if (!is.numeric(input$y)) stop("'y' is not numeric")
-  if (!is.numeric(input$dat)) stop("'dat' is not numeric")
-  if (!is.vector(input$y)) stop("'y' is not a vector")
-  if (!is.matrix(input$dat)) stop("'dat' is not a matrix ")
-  if (length(input$y) != dim(input$dat)[1]) stop("Dimensions of 'y' and 'dat' do not match")
 }

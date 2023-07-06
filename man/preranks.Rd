@@ -5,37 +5,56 @@
 \alias{get_prerank}
 \title{Pre-rank functions for multivariate calibration}
 \usage{
-get_prerank(y, dat, prerank, return_rank = TRUE, t = NULL)
+get_prerank(y, dat, prerank, return_rank = TRUE, ...)
 }
 \arguments{
 \item{y}{multivariate observation (numeric vector of length d).}
 
 \item{dat}{samples from multivariate forecast distribution (numeric matrix with d rows).}
 
-\item{prerank}{the pre-rank function to be used. See details for a list of options.}
+\item{prerank}{the pre-rank function to be used. This is either a string from
+a list of possible options (see details below), or a function.}
 
 \item{return_rank}{logical specifying whether the rank should be returned
 (rather than the vector of pre-ranks). Default is TRUE.}
 
-\item{t}{threshold for the FTE pre-rank function (single numeric value).}
+\item{...}{additional parameters for the pre-rank functions.}
 }
 \value{
 Rank of the pre-rank transformed observation among the forecast sample (if
-\code{prerank = F}), or a vector of pre-ranks corresponding to the observation
-and sample members (if \code{prerank = T}).
+\code{return_rank = T}), or a vector of pre-ranks corresponding to the observation
+and sample members (if \code{return_rank = F}).
 }
 \description{
 Calulate pre-ranks of multivariate forecasts and observations
 }
 \details{
-The pre-rank functions currently included are the multivariate rank
+When assessing multivariate calibration, it is common to convert the multivariate
+forecasts and observations into univariate objects, and then apply univariate
+methods. In the context of multivariate calibration, the function used to
+perform this transformation is often called a pre-rank function.
+
+The function \code{get_prerank()} can be used to apply this transformation, and
+to extract the rank of the transformed observation among the transformed
+samples from the forecast (i.e. ensemble members).
+
+The argument \code{prerank} specifies which pre-rank function to use. This can
+either be a string corresponding to one of several in-built options, or it can
+be a user-specified function.
+
+The in-built pre-rank functions currently available are the multivariate rank
 (\code{prerank = "multivariate_rank}), the average rank (\code{"average_rank"}),
 the band-depth rank (\code{"band_depth"}), the mean (\code{"mean"}), the variance
 (\code{"variance"}), the energy score (\code{"energy_score"}), and the
 fraction of threshold exceedances (\code{fte_rank}). See references for details.
-
-Pre-rank functions will also be added for the variogram, isotropy, and
+Pre-rank functions will later be added for the variogram, isotropy, and
 minimum spanning tree.
+
+If \code{prerank} is a function, it should convert a vector of dimension d, to
+a single numeric value. Checks are in place to ensure this is satisfied. The
+\code{prerank} function could also take additional inputs, in which case these
+inputs should be included as additional arguments in the function. See examples
+below.
 }
 \examples{
 d <- 5
@@ -77,6 +96,16 @@ mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = "va
 barplot(table(mvranks)) # observation is more likely to take a higher rank
 # forecast's under-estimate the variance, so the observation often has a higher variance rank
 # when evaluated using the variance pre-rank function
+
+# custom pre-rank function
+dat <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
+prerank <- function(x) mean((x - mean(x))^3) # function to quantify skew
+mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = prerank))
+barplot(table(mvranks))
+
+prerank <- function(x, q) mean((x - mean(x))^q) # function to quantify q-th centered moment
+mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = prerank, q = 3))
+barplot(table(mvranks))
 
 }
 \references{
