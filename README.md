@@ -5,7 +5,7 @@ This repository contains R code to reproduce the results presented in the prepri
 > Allen, S., Ziegel, J. and Ginsbourger, D. (2023). 
 > Assessing the calibration of multivariate probabilistic forecasts.
 > ArXiv preprint.
-> [arXiv:2307.05846](arXiv:2307.05846)
+> [arxiv.2307.05846](https://arxiv.org/abs/2307.05846)
 
 ## Forecast calibration
 
