@@ -3,7 +3,7 @@
 #' Calculate pre-ranks of multivariate forecasts and observations
 #'
 #' @param y multivariate observation (numeric vector of length d).
-#' @param dat samples from multivariate forecast distribution (numeric matrix with d rows).
+#' @param x samples from multivariate forecast distribution (numeric matrix with d rows).
 #' @param prerank the pre-rank function to be used. This is either a string from
 #'  a list of possible options (see details below), or a function.
 #' @param return_rank logical specifying whether the rank should be returned
@@ -70,17 +70,17 @@
 #' M <- 10
 #'
 #' y <- as.vector(mvtnorm::rmvnorm(1, rep(0, d)))
-#' dat <- t(mvtnorm::rmvnorm(M, rep(0, d)))
+#' x <- t(mvtnorm::rmvnorm(M, rep(0, d)))
 #'
-#' get_prerank(y, dat, prerank = "average_rank", return_rank = F)
-#' get_prerank(y, dat, prerank = "average_rank")
+#' get_prerank(y, x, prerank = "average_rank", return_rank = F)
+#' get_prerank(y, x, prerank = "average_rank")
 #'
-#' get_prerank(y, dat, prerank = "variance", return_rank = F)
-#' get_prerank(y, dat, prerank = "variance")
+#' get_prerank(y, x, prerank = "variance", return_rank = F)
+#' get_prerank(y, x, prerank = "variance")
 #'
-#' get_prerank(y, dat, prerank = "FTE", t = 0.5, return_rank = F)
-#' get_prerank(y, dat, prerank = "FTE", t = 0.5) # ties are resolved at random
-#' get_prerank(y, dat, prerank = "FTE", t = 0.5)
+#' get_prerank(y, x, prerank = "FTE", t = 0.5, return_rank = F)
+#' get_prerank(y, x, prerank = "FTE", t = 0.5) # ties are resolved at random
+#' get_prerank(y, x, prerank = "FTE", t = 0.5)
 #'
 #'
 #' ### use sapply to apply to several forecast cases
@@ -88,28 +88,28 @@
 #' y <- t(mvtnorm::rmvnorm(n, rep(0, d)))
 #'
 #' # calibrated forecasts
-#' dat <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
-#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = "mean"))
+#' x <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
+#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "mean"))
 #' barplot(table(mvranks)) # observation is equally likely to take each rank
 #'
 #' # miscalibrated mean
-#' dat <- array(t(mvtnorm::rmvnorm(n*M, rep(-0.5, d))), c(d, M, n))
-#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = "mean"))
+#' x <- array(t(mvtnorm::rmvnorm(n*M, rep(-0.5, d))), c(d, M, n))
+#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "mean"))
 #' barplot(table(mvranks))
 #' # forecast's under-estimate the mean, so the observation often has a higher rank
 #' # when evaluated using the mean pre-rank function
 #'
 #' # miscalibrated variance
-#' dat <- array(t(mvtnorm::rmvnorm(n*M, sigma = 0.7*diag(d))), c(d, M, n))
-#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = "variance"))
+#' x <- array(t(mvtnorm::rmvnorm(n*M, sigma = 0.7*diag(d))), c(d, M, n))
+#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "variance"))
 #' barplot(table(mvranks)) # observation is more likely to take a higher rank
 #' # forecast's under-estimate the variance, so the observation often has a higher variance rank
 #' # when evaluated using the variance pre-rank function
 #'
 #' # custom pre-rank function
-#' dat <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
+#' x <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
 #' prerank <- function(x) mean((x - mean(x))^3) # function to quantify skew
-#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = prerank))
+#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = prerank))
 #' barplot(table(mvranks))
 #'
 #' prerank <- function(x, q) mean((x - mean(x))^q) # function to quantify q-th centered moment
@@ -122,33 +122,35 @@ NULL
 
 #' @rdname preranks
 #' @export
-get_prerank <- function(y, dat, prerank, return_rank = TRUE, ...) {
-  check_inputs(y = y, dat = dat, prerank = prerank, ...)
+get_prerank <- function(y, x, prerank, return_rank = TRUE, ...) {
+  check_inputs(y = y, x = x, prerank = prerank, ...)
   if (is.function(prerank)) {
-    custom_rank(y, dat, prerank, return_rank, ...)
+    custom_rank(y, x, prerank, return_rank, ...)
   } else if (prerank == "multivariate_rank") {
-    mv_rank(y, dat, return_rank)
+    mv_rank(y, x, return_rank)
   } else if (prerank == "average_rank") {
-    av_rank(y, dat, return_rank)
+    av_rank(y, x, return_rank)
   } else if (prerank == "band_depth") {
-    bd_rank(y, dat, return_rank)
+    bd_rank(y, x, return_rank)
   } else if (prerank == "mean") {
-    mean_rank(y, dat, return_rank)
+    mean_rank(y, x, return_rank)
   } else if (prerank == "variance") {
-    var_rank(y, dat, return_rank)
+    var_rank(y, x, return_rank)
   } else if (prerank == "energy_score") {
-    es_rank(y, dat, return_rank)
+    es_rank(y, x, return_rank)
   } else if (prerank == "FTE") {
-    fte_rank(y, dat, t, return_rank)
+    fte_rank(y, x, t, return_rank)
+  } else if (prerank == "variogram") {
+    vg_rank(y, x, w, p, std, return_rank)
   }
 }
 
 # multivariate rank
-mv_rank <- function(y, dat, return_rank = TRUE) {
-  S <- cbind(y, dat)
+mv_rank <- function(y, x, return_rank = TRUE) {
+  S <- cbind(y, x)
   M <- ncol(S)
   rho <- sapply(1:M, function(i) sum(sapply(1:M, function(j) all(S[, j] <= S[, i]))))
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(dat)))
+  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(x)))
   if (return_rank) {
     rank_y <- rank(rho, ties.method = "random")[1]
     return(unname(rank_y))
@@ -158,12 +160,12 @@ mv_rank <- function(y, dat, return_rank = TRUE) {
 }
 
 # average rank
-av_rank <- function(y, dat, return_rank = TRUE) {
-  S <- cbind(y, dat)
+av_rank <- function(y, x, return_rank = TRUE) {
+  S <- cbind(y, x)
   d <- length(y)
   C <- sapply(1:d, function(l) rank(S[l, ]))
   rho <- rowMeans(C)
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(dat)))
+  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(x)))
   if (return_rank) {
     rank_y <- rank(rho, ties.method = "random")[1]
     return(unname(rank_y))
@@ -173,13 +175,13 @@ av_rank <- function(y, dat, return_rank = TRUE) {
 }
 
 # band-depth
-bd_rank <- function(y, dat, return_rank = TRUE) {
-  S <- cbind(y, dat)
+bd_rank <- function(y, x, return_rank = TRUE) {
+  S <- cbind(y, x)
   d <- length(y)
   M <- ncol(S)
   c <- sapply(1:d, function(l) rank(S[l, ]))
   rho <- rowMeans((M - c)*(c - 1))
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(dat)))
+  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(x)))
   if (return_rank) {
     rank_y <- rank(rho, ties.method = "random")[1]
     return(unname(rank_y))
@@ -189,31 +191,31 @@ bd_rank <- function(y, dat, return_rank = TRUE) {
 }
 
 # mean
-mean_rank <- function(y, dat, return_rank = TRUE) {
-  custom_rank(y, dat, prerank = mean, return_rank)
+mean_rank <- function(y, x, return_rank = TRUE) {
+  custom_rank(y, x, prerank = mean, return_rank)
 }
 
 # variance
-var_rank <- function(y, dat, return_rank = TRUE) {
-  custom_rank(y, dat, prerank = var, return_rank)
+var_rank <- function(y, x, return_rank = TRUE) {
+  custom_rank(y, x, prerank = var, return_rank)
 }
 
 # energy score
-es_rank <- function(y, dat, return_rank = TRUE) {
-  custom_rank(y, dat, prerank = scoringRules::es_sample, return_rank)
+es_rank <- function(y, x, return_rank = TRUE) {
+  custom_rank(y, x, prerank = scoringRules::es_sample, return_rank, dat = x)
 }
 
 # fraction of threshold exceedances
-fte_rank <- function(y, dat, t, return_rank = TRUE) {
-  custom_rank(y, dat, prerank = sum, return_rank, t = t)
+fte_rank <- function(y, x, t, return_rank = TRUE) {
+  custom_rank(y, x, prerank = sum, return_rank, t = t)
 }
 
 # custom pre-rank function
-custom_rank <- function(y, dat, prerank, return_rank = TRUE, ...) {
+custom_rank <- function(y, x, prerank, return_rank = TRUE, ...) {
   g_y <- prerank(y, ...)
-  g_dat <- apply(dat, 2, prerank, ...)
-  rho <- c(g_y, g_dat)
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(dat)))
+  g_x <- apply(x, 2, prerank, ...)
+  rho <- c(g_y, g_x)
+  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(x)))
   if (return_rank) {
     rank_y <- rank(rho, ties.method = "random")[1]
     return(unname(rank_y))
@@ -226,17 +228,17 @@ custom_rank <- function(y, dat, prerank, return_rank = TRUE, ...) {
 # helper functions
 
 # input checks (adapted from scoringRules)
-check_inputs <- function (y, dat, prerank, ...) {
+check_inputs <- function (y, x, prerank, ...) {
   if (!is.numeric(y)) stop("'y' is not numeric")
-  if (!is.numeric(dat)) stop("'dat' is not numeric")
+  if (!is.numeric(x)) stop("'x' is not numeric")
   if (!is.vector(y)) stop("'y' is not a vector")
-  if (!is.matrix(dat)) stop("'dat' is not a matrix ")
-  if (length(y) != dim(dat)[1]) stop("Dimensions of 'y' and 'dat' do not match")
+  if (!is.matrix(x)) stop("'x' is not a matrix ")
+  if (length(y) != dim(x)[1]) stop("Dimensions of 'y' and 'x' do not match")
 
   if (is.function(prerank)) {
     g_y <- prerank(y, ...)
-    g_dat <- apply(dat, 2, prerank, ...)
-    if (!is.numeric(g_y) || !is.numeric(g_dat)) stop("The pre-rank function returns non-numeric values")
+    g_x <- apply(x, 2, prerank, ...)
+    if (!is.numeric(g_y) || !is.numeric(g_x)) stop("The pre-rank function returns non-numeric values")
     if (length(g_y) > 1) stop("The pre-rank function does not return a single value")
   } else{
     admissible_preranks <- c("multivariate_rank", "average_rank", "band_depth",

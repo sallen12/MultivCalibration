@@ -5,12 +5,12 @@
 \alias{get_prerank}
 \title{Pre-rank functions to assess multivariate calibration}
 \usage{
-get_prerank(y, dat, prerank, return_rank = TRUE, ...)
+get_prerank(y, x, prerank, return_rank = TRUE, ...)
 }
 \arguments{
 \item{y}{multivariate observation (numeric vector of length d).}
 
-\item{dat}{samples from multivariate forecast distribution (numeric matrix with d rows).}
+\item{x}{samples from multivariate forecast distribution (numeric matrix with d rows).}
 
 \item{prerank}{the pre-rank function to be used. This is either a string from
 a list of possible options (see details below), or a function.}
@@ -60,17 +60,17 @@ d <- 5
 M <- 10
 
 y <- as.vector(mvtnorm::rmvnorm(1, rep(0, d)))
-dat <- t(mvtnorm::rmvnorm(M, rep(0, d)))
+x <- t(mvtnorm::rmvnorm(M, rep(0, d)))
 
-get_prerank(y, dat, prerank = "average_rank", return_rank = F)
-get_prerank(y, dat, prerank = "average_rank")
+get_prerank(y, x, prerank = "average_rank", return_rank = F)
+get_prerank(y, x, prerank = "average_rank")
 
-get_prerank(y, dat, prerank = "variance", return_rank = F)
-get_prerank(y, dat, prerank = "variance")
+get_prerank(y, x, prerank = "variance", return_rank = F)
+get_prerank(y, x, prerank = "variance")
 
-get_prerank(y, dat, prerank = "FTE", t = 0.5, return_rank = F)
-get_prerank(y, dat, prerank = "FTE", t = 0.5) # ties are resolved at random
-get_prerank(y, dat, prerank = "FTE", t = 0.5)
+get_prerank(y, x, prerank = "FTE", t = 0.5, return_rank = F)
+get_prerank(y, x, prerank = "FTE", t = 0.5) # ties are resolved at random
+get_prerank(y, x, prerank = "FTE", t = 0.5)
 
 
 ### use sapply to apply to several forecast cases
@@ -78,28 +78,28 @@ n <- 1000
 y <- t(mvtnorm::rmvnorm(n, rep(0, d)))
 
 # calibrated forecasts
-dat <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
-mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = "mean"))
+x <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
+mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "mean"))
 barplot(table(mvranks)) # observation is equally likely to take each rank
 
 # miscalibrated mean
-dat <- array(t(mvtnorm::rmvnorm(n*M, rep(-0.5, d))), c(d, M, n))
-mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = "mean"))
+x <- array(t(mvtnorm::rmvnorm(n*M, rep(-0.5, d))), c(d, M, n))
+mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "mean"))
 barplot(table(mvranks))
 # forecast's under-estimate the mean, so the observation often has a higher rank
 # when evaluated using the mean pre-rank function
 
 # miscalibrated variance
-dat <- array(t(mvtnorm::rmvnorm(n*M, sigma = 0.7*diag(d))), c(d, M, n))
-mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = "variance"))
+x <- array(t(mvtnorm::rmvnorm(n*M, sigma = 0.7*diag(d))), c(d, M, n))
+mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "variance"))
 barplot(table(mvranks)) # observation is more likely to take a higher rank
 # forecast's under-estimate the variance, so the observation often has a higher variance rank
 # when evaluated using the variance pre-rank function
 
 # custom pre-rank function
-dat <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
+x <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
 prerank <- function(x) mean((x - mean(x))^3) # function to quantify skew
-mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = prerank))
+mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = prerank))
 barplot(table(mvranks))
 
 prerank <- function(x, q) mean((x - mean(x))^q) # function to quantify q-th centered moment
