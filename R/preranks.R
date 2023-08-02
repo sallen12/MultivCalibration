@@ -113,7 +113,7 @@
 #' barplot(table(mvranks))
 #'
 #' prerank <- function(x, q) mean((x - mean(x))^q) # function to quantify q-th centered moment
-#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], dat[, , i], prerank = prerank, q = 3))
+#' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = prerank, q = 3))
 #' barplot(table(mvranks))
 #'
 #' @name preranks
@@ -123,7 +123,15 @@ NULL
 #' @rdname preranks
 #' @export
 get_prerank <- function(y, x, prerank, return_rank = TRUE, ...) {
-  check_inputs(y = y, x = x, prerank = prerank, ...)
+  check_inputs(y = y, x = x, prerank = prerank, return_rank, ...)
+  varargs <- list(...)
+  if (!is.function(prerank)) {
+    if (prerank == "variogram") {
+      if (is.null(varargs$w)) varargs$w <- matrix(1, nrow = length(y), ncol = length(y))
+      if (is.null(varargs$p)) varargs$p <- 2
+      if (is.null(varargs$std)) varargs$std <- TRUE
+    }
+  }
   if (is.function(prerank)) {
     custom_rank(y, x, prerank, return_rank, ...)
   } else if (prerank == "multivariate_rank") {
@@ -139,9 +147,9 @@ get_prerank <- function(y, x, prerank, return_rank = TRUE, ...) {
   } else if (prerank == "energy_score") {
     es_rank(y, x, return_rank)
   } else if (prerank == "FTE") {
-    fte_rank(y, x, t, return_rank)
+    fte_rank(y, x, return_rank, t = varargs$t)
   } else if (prerank == "variogram") {
-    vg_rank(y, x, w, p, std, return_rank)
+    vg_rank(y, x, return_rank, w = varargs$w, p = varargs$p, std = varargs$std)
   }
 }
 
@@ -210,6 +218,18 @@ fte_rank <- function(y, x, t, return_rank = TRUE) {
   custom_rank(y, x, prerank = sum, return_rank, t = t)
 }
 
+# variogram
+vg_rank <- function(y, x, w, p, std, return_rank = TRUE) {
+  custom_rank(y, x, prerank = vario_func, return_rank, w = w, p = p, std = std)
+}
+
+# variogram helper function
+vario_func <- function(x, w, p, std) {
+  g_x <- vario(x, w, p)
+  if (std) g_x <- g_x/var(x)
+  return(g_x)
+}
+
 # custom pre-rank function
 custom_rank <- function(y, x, prerank, return_rank = TRUE, ...) {
   g_y <- prerank(y, ...)
@@ -224,11 +244,13 @@ custom_rank <- function(y, x, prerank, return_rank = TRUE, ...) {
   }
 }
 
+
 ################################################################################
 # helper functions
 
 # input checks (adapted from scoringRules)
-check_inputs <- function (y, x, prerank, ...) {
+check_inputs <- function (y, x, prerank, return_rank, ...) {
+  if (!is.logical(return_rank)) stop("'return_rank' is not a logical")
   if (!is.numeric(y)) stop("'y' is not numeric")
   if (!is.numeric(x)) stop("'x' is not numeric")
   if (!is.vector(y)) stop("'y' is not a vector")
@@ -241,15 +263,16 @@ check_inputs <- function (y, x, prerank, ...) {
     if (!is.numeric(g_y) || !is.numeric(g_x)) stop("The pre-rank function returns non-numeric values")
     if (length(g_y) > 1) stop("The pre-rank function does not return a single value")
   } else{
+    varargs <- list(...)
     admissible_preranks <- c("multivariate_rank", "average_rank", "band_depth",
-                             "mean", "variance", "energy_score", "FTE")
+                             "mean", "variance", "energy_score", "FTE", "variogram")
     if (!(prerank %in% admissible_preranks)) {
       stop(paste("'prerank' must be one of:", paste(admissible_preranks, collapse = ", ")))
     }
     if (prerank == "FTE") {
-      if (is.null(t)) stop("The FTE pre-rank function requires an additional argument 't'")
-      if (!is.numeric(t)) stop("'t' is not numeric")
-      if (length(t) > 1) stop("'t' must be a single numeric value")
+      if (is.null(varargs$t)) stop("The FTE pre-rank function requires an additional argument 't'")
+      if (!is.numeric(varargs$t)) stop("'t' is not numeric")
+      if (length(varargs$t) > 1) stop("'t' must be a single numeric value")
     }
   }
 }
