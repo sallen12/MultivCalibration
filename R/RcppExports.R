@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 vario <- function(y, w_mat, p) {
-    .Call('_MultivCalibration_vario', PACKAGE = 'MultivCalibration', y, w_mat, p)
+    .Call(`_MultivCalibration_vario`, y, w_mat, p)
 }
 
