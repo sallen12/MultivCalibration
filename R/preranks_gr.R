@@ -107,13 +107,13 @@ get_prerank_gr <- function(y, x, prerank, return_rank = TRUE, ...) {
   } else if (prerank == "variogram") {
     vg_rank_mat(y, x, return_rank, h = varargs$h, p = varargs$p, std = varargs$std)
   } else if (prerank == "isotropy") {
-    iso_rank(y, x, return_rank, h = varargs$h)
+    iso_rank(y, x, return_rank, h = varargs$h, p = varargs$p)
   }
 }
 
 # variogram
 vg_rank_mat <- function(y, x, h, p, std, return_rank = TRUE) {
-  custom_rank(y, x, prerank = vario_func_mat, return_rank, h = h, p = p, std = std)
+  custom_rank_gr(y, x, prerank = vario_func_mat, return_rank, h = h, p = p, std = std)
 }
 
 # variogram helper function
@@ -128,8 +128,8 @@ vario_func_mat <- function(x, h, p, std) {
 }
 
 # isotropy
-iso_rank <- function(y, x, h, return_rank = TRUE) {
-  custom_rank(y, x, prerank = iso_func, return_rank, h = h, p = p)
+iso_rank <- function(y, x, h, p, return_rank = TRUE) {
+  custom_rank_gr(y, x, prerank = iso_func, return_rank, h = h, p = p)
 }
 
 # isotropy helper function
@@ -152,7 +152,7 @@ custom_rank_gr <- function(y, x, prerank, return_rank = TRUE, ...) {
   g_y <- prerank(y, ...)
   g_x <- apply(x, 3, prerank, ...)
   rho <- c(g_y, g_x)
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(x)))
+  names(rho) <- c("obs", sprintf("ens%d", 1:dim(x)[3]))
   if (return_rank) {
     rank_y <- rank(rho, ties.method = "random")[1]
     return(unname(rank_y))
@@ -213,7 +213,7 @@ check_inputs_gr <- function (y, x, prerank, return_rank, ...) {
       if (!is.null(varargs$h)) {
         if (!is.numeric(varargs$h)) stop("'h' is not numeric")
         if (!is.vector(varargs$h)) stop("'h' must be a numeric vector")
-        if (any(varargs$h - as.integer(varargs$h) != 0))
+        if (any(varargs$h != as.integer(varargs$h)))
         message("'h' is not an integer. Using the integer part of 'h' when calculating the isotropy")
       }
 
