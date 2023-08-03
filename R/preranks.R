@@ -34,7 +34,8 @@
 #'
 #' Allen, S., Ziegel, J. and D. Ginsbourger (2023):
 #' `Assessing the calibration of multivariate probabilistic forecasts'.
-#' \emph{arXiv preprint}.
+#' \emph{arXiv preprint}. arXiv:2307.05846.
+#' \doi{10.48550/arXiv.2307.05846}
 #'
 #' @author Sam Allen
 #'
