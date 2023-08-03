@@ -60,10 +60,12 @@
 #' get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), return_rank = F)
 #' get_prerank_gr(y, x, prerank = "variogram", h = c(0, -1), return_rank = F)
 #' get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), std = F, return_rank = F)
+#' get_prerank_gr(y, x, prerank = "variogram", h = rbind(c(0, 1), c(1, 0)))
 #'
 #' get_prerank_gr(y, x, prerank = "isotropy", return_rank = F)
 #' get_prerank_gr(y, x, prerank = "isotropy")
 #' get_prerank_gr(y, x, prerank = "isotropy", h = 2)
+#' get_prerank_gr(y, x, prerank = "isotropy", h = c(1, 2))
 #'
 #' @name preranks_gr
 NULL
@@ -132,11 +134,17 @@ iso_rank <- function(y, x, h, return_rank = TRUE) {
 
 # isotropy helper function
 iso_func <- function(x, h, p) {
-  h <- h*rbind(c(0, 1), c(1, 0), c(1, 1), c(-1, 1))
-  g_x_vec <- apply(h, 1, vario_mat, y = x, p = p)
-  g_x <- ((g_x_vec[1] - g_x_vec[2])/(g_x_vec[1] + g_x_vec[2]))^2 +
-    ((g_x_vec[3] - g_x_vec[4])/(g_x_vec[3] + g_x_vec[4]))^2
-  return(-g_x)
+  if (length(h) > 1) {
+    g_x <- sapply(h, iso_func, x = x, p = p)
+    g_x <- sum(g_x)
+  } else {
+    h <- h*rbind(c(0, 1), c(1, 0), c(1, 1), c(-1, 1))
+    g_x_vec <- apply(h, 1, vario_mat, y = x, p = p)
+    g_x <- ((g_x_vec[1] - g_x_vec[2])/(g_x_vec[1] + g_x_vec[2]))^2 +
+      ((g_x_vec[3] - g_x_vec[4])/(g_x_vec[3] + g_x_vec[4]))^2
+    g_x <- -g_x
+  }
+  return(g_x)
 }
 
 # custom pre-rank function
@@ -185,7 +193,7 @@ check_inputs_gr <- function (y, x, prerank, return_rank, ...) {
     } else if (prerank == "variogram") {
       if (is.null(varargs$h)) stop("The variogram pre-rank function requires an additional argument 'h'")
       if (!is.numeric(varargs$h)) stop("'h' is not numeric")
-      if (!is.vector(varargs$h) || !is.matrix(varargs$h)) stop("'h' must be either a vector or a matrix")
+      if (!is.vector(varargs$h) && !is.matrix(varargs$h)) stop("'h' must be either a vector or a matrix")
       if (is.vector(varargs$h)) {
         if (length(varargs$h) != 2) stop("'h' must be a vector of length 2")
       } else if (is.matrix(varargs$h)) {
@@ -204,8 +212,8 @@ check_inputs_gr <- function (y, x, prerank, return_rank, ...) {
     } else if (prerank == "isotropy") {
       if (!is.null(varargs$h)) {
         if (!is.numeric(varargs$h)) stop("'h' is not numeric")
-        if (length(varargs$h) > 1) stop("'h' must be a single numeric value")
-        if (varargs$h - as.integer(varargs$h) != 0)
+        if (!is.vector(varargs$h)) stop("'h' must be a numeric vector")
+        if (any(varargs$h - as.integer(varargs$h) != 0))
         message("'h' is not an integer. Using the integer part of 'h' when calculating the isotropy")
       }
 

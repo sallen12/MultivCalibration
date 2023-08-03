@@ -81,7 +81,7 @@
 #'
 #' get_prerank(y, x, prerank = "FTE", t = 0.5, return_rank = F)
 #' get_prerank(y, x, prerank = "FTE", t = 0.5) # ties are resolved at random
-#' get_prerank(y, x, prerank = "FTE", t = 0.5)
+#' get_prerank(y, x, prerank = "FTE", t = -0.5)
 #'
 #'
 #' ### use sapply to apply to several forecast cases

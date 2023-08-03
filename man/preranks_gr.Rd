@@ -64,10 +64,12 @@ get_prerank_gr(y, x, prerank = "variance")
 get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), return_rank = F)
 get_prerank_gr(y, x, prerank = "variogram", h = c(0, -1), return_rank = F)
 get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), std = F, return_rank = F)
+get_prerank_gr(y, x, prerank = "variogram", h = rbind(c(0, 1), c(1, 0)))
 
 get_prerank_gr(y, x, prerank = "isotropy", return_rank = F)
 get_prerank_gr(y, x, prerank = "isotropy")
 get_prerank_gr(y, x, prerank = "isotropy", h = 2)
+get_prerank_gr(y, x, prerank = "isotropy", h = c(1, 2))
 
 }
 \references{
