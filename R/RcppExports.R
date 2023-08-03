@@ -5,3 +5,7 @@ vario <- function(y, w_mat, p) {
     .Call(`_MultivCalibration_vario`, y, w_mat, p)
 }
 
+vario_mat <- function(y, h, p) {
+    .Call(`_MultivCalibration_vario_mat`, y, h, p)
+}
+

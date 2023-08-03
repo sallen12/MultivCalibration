@@ -24,9 +24,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// vario_mat
+double vario_mat(arma::mat y, arma::ivec h, double p);
+RcppExport SEXP _MultivCalibration_vario_mat(SEXP ySEXP, SEXP hSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::ivec >::type h(hSEXP);
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(vario_mat(y, h, p));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_MultivCalibration_vario", (DL_FUNC) &_MultivCalibration_vario, 3},
+    {"_MultivCalibration_vario_mat", (DL_FUNC) &_MultivCalibration_vario_mat, 3},
     {NULL, NULL, 0}
 };
 
