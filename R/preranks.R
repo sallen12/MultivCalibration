@@ -3,7 +3,7 @@
 #' Calculate pre-ranks of multivariate forecasts and observations
 #'
 #' @param y multivariate observation (numeric vector of length d).
-#' @param x samples from multivariate forecast distribution (numeric matrix with d rows).
+#' @param x samples from multivariate forecast distribution (numeric matrix with d rows and M columns).
 #' @param prerank the pre-rank function to be used. This is either a string from
 #'  a list of possible options (see details below), or a function.
 #' @param return_rank logical specifying whether the rank should be returned
@@ -274,6 +274,22 @@ check_inputs <- function (y, x, prerank, return_rank, ...) {
       if (is.null(varargs$t)) stop("The FTE pre-rank function requires an additional argument 't'")
       if (!is.numeric(varargs$t)) stop("'t' is not numeric")
       if (length(varargs$t) > 1) stop("'t' must be a single numeric value")
+    } else if (prerank == "variogram") {
+      if (!is.numeric(varargs$w)) stop("'w' is not numeric")
+      if (!is.matrix(varargs$w)) stop("'w' must be a matrix")
+      if (dim(varargs$w)[1] != dim(x)[1] || dim(varargs$w)[2] != dim(x)[1])
+        stop("'w' must be a matrix with d rows and d columns")
+      if (any(varargs$w < 0)) stop("The weight matrix 'w' contans negative entries")
+
+      if (!is.null(varargs$p)) {
+        if (!is.numeric(varargs$p)) stop("'p' is not numeric")
+        if (length(varargs$p) > 1) stop("'p' must be a single numeric value")
+        if (varargs$p <= 0) stop(paste("'p' must be a positive number, got ", varargs$p))
+      }
+
+      if (!is.null(varargs$std)) {
+        if (!is.logical(varargs$std)) stop("'std' must be a logical")
+      }
     }
   }
 }

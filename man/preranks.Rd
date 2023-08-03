@@ -10,7 +10,7 @@ get_prerank(y, x, prerank, return_rank = TRUE, ...)
 \arguments{
 \item{y}{multivariate observation (numeric vector of length d).}
 
-\item{x}{samples from multivariate forecast distribution (numeric matrix with d rows).}
+\item{x}{samples from multivariate forecast distribution (numeric matrix with d rows and M columns).}
 
 \item{prerank}{the pre-rank function to be used. This is either a string from
 a list of possible options (see details below), or a function.}
