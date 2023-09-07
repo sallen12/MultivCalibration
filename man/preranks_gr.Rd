@@ -55,18 +55,18 @@ M <- 10
 y <- matrix(rnorm(d1*d2), nrow = d1, ncol = d2)
 x <- array(rnorm(d1*d2*M), c(d1, d2, M))
 
-get_prerank_gr(y, x, prerank = "average_rank", return_rank = F)
-get_prerank(as.vector(y), matrix(x, nrow = d1*d2, ncol = M), prerank = "average_rank", return_rank = F)
+get_prerank_gr(y, x, prerank = "average_rank", return_rank = FALSE)
+get_prerank(as.vector(y), matrix(x, nrow = d1*d2, ncol = M), prerank = "average_rank", return_rank = FALSE)
 
-get_prerank_gr(y, x, prerank = "variance", return_rank = F)
+get_prerank_gr(y, x, prerank = "variance", return_rank = FALSE)
 get_prerank_gr(y, x, prerank = "variance")
 
-get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), return_rank = F)
-get_prerank_gr(y, x, prerank = "variogram", h = c(0, -1), return_rank = F)
-get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), std = F, return_rank = F)
+get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), return_rank = FALSE)
+get_prerank_gr(y, x, prerank = "variogram", h = c(0, -1), return_rank = FALSE)
+get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), std = FALSE, return_rank = FALSE)
 get_prerank_gr(y, x, prerank = "variogram", h = rbind(c(0, 1), c(1, 0)))
 
-get_prerank_gr(y, x, prerank = "isotropy", return_rank = F)
+get_prerank_gr(y, x, prerank = "isotropy", return_rank = FALSE)
 get_prerank_gr(y, x, prerank = "isotropy")
 get_prerank_gr(y, x, prerank = "isotropy", h = 2)
 get_prerank_gr(y, x, prerank = "isotropy", h = c(1, 2))

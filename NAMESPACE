@@ -2,4 +2,6 @@
 
 export(get_prerank)
 export(get_prerank_gr)
+importFrom(Rcpp,evalCpp)
 useDynLib(MultivCalibration, .registration = TRUE)
+

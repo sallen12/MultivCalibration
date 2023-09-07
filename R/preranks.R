@@ -70,45 +70,47 @@
 #' d <- 5
 #' M <- 10
 #'
-#' y <- as.vector(mvtnorm::rmvnorm(1, rep(0, d)))
-#' x <- t(mvtnorm::rmvnorm(M, rep(0, d)))
+#' library(MASS)
 #'
-#' get_prerank(y, x, prerank = "average_rank", return_rank = F)
+#' y <- as.vector(mvrnorm(1, rep(0, d), diag(d)))
+#' x <- t(mvrnorm(M, rep(0, d), diag(d)))
+#'
+#' get_prerank(y, x, prerank = "average_rank", return_rank = FALSE)
 #' get_prerank(y, x, prerank = "average_rank")
 #'
-#' get_prerank(y, x, prerank = "variance", return_rank = F)
+#' get_prerank(y, x, prerank = "variance", return_rank = FALSE)
 #' get_prerank(y, x, prerank = "variance")
 #'
-#' get_prerank(y, x, prerank = "FTE", t = 0.5, return_rank = F)
+#' get_prerank(y, x, prerank = "FTE", t = 0.5, return_rank = FALSE)
 #' get_prerank(y, x, prerank = "FTE", t = 0.5) # ties are resolved at random
 #' get_prerank(y, x, prerank = "FTE", t = -0.5)
 #'
 #'
 #' ### use sapply to apply to several forecast cases
 #' n <- 1000
-#' y <- t(mvtnorm::rmvnorm(n, rep(0, d)))
+#' y <- t(mvrnorm(n, rep(0, d), diag(d)))
 #'
 #' # calibrated forecasts
-#' x <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
+#' x <- array(t(mvrnorm(n*M, rep(0, d), diag(d))), c(d, M, n))
 #' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "mean"))
 #' barplot(table(mvranks)) # observation is equally likely to take each rank
 #'
 #' # miscalibrated mean
-#' x <- array(t(mvtnorm::rmvnorm(n*M, rep(-0.5, d))), c(d, M, n))
+#' x <- array(t(mvrnorm(n*M, rep(-0.5, d), diag(d))), c(d, M, n))
 #' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "mean"))
 #' barplot(table(mvranks))
 #' # forecast's under-estimate the mean, so the observation often has a higher rank
 #' # when evaluated using the mean pre-rank function
 #'
 #' # miscalibrated variance
-#' x <- array(t(mvtnorm::rmvnorm(n*M, sigma = 0.7*diag(d))), c(d, M, n))
+#' x <- array(t(mvrnorm(n*M, rep(0, d), 0.7*diag(d))), c(d, M, n))
 #' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = "variance"))
 #' barplot(table(mvranks)) # observation is more likely to take a higher rank
 #' # forecast's under-estimate the variance, so the observation often has a higher variance rank
 #' # when evaluated using the variance pre-rank function
 #'
 #' # custom pre-rank function
-#' x <- array(t(mvtnorm::rmvnorm(n*M, rep(0, d))), c(d, M, n))
+#' x <- array(t(mvrnorm(n*M, rep(0, d), diag(d))), c(d, M, n))
 #' prerank <- function(x) mean((x - mean(x))^3) # function to quantify skew
 #' mvranks <- sapply(1:n, function(i) get_prerank(y[, i], x[, , i], prerank = prerank))
 #' barplot(table(mvranks))
