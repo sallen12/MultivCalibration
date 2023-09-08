@@ -7,9 +7,8 @@ Description: An R package that provides tools to evaluate the calibration of
     multivariate probabilistic forecasts. Several prerank functions are provided
     that condense the multivariate forecasts and observations to univariate 
     objects, to which univariate checks for calibration can be employed.
-License: MIT + file LICENSE
+License: GPL (>= 2)
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.2.2
 Suggests: 
     geoR,
