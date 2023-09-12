@@ -296,9 +296,6 @@ get_prerank(y[1, ], x[1, , ], prerank = "average_rank")
 We can use \code{sapply()} to loop over all $n$ observations. We repeat this for all pre-rank functions, and store the result in a data frame.
 
 <<sim_study_mvn_rankdf_1>>=
-# specify weight matrix for variogram pre-rank function
-w_mat <- matrix(as.numeric(abs(outer(1:d, 1:d, FUN = "-")) <= 1), nrow = d)
-
 rank_df <- sapply(1:n, function(i) {
   mvr <- get_prerank(y[i, ], x[i, , ], prerank = "multivariate_rank")
   avr <- get_prerank(y[i, ], x[i, , ], prerank = "average_rank")
@@ -306,7 +303,7 @@ rank_df <- sapply(1:n, function(i) {
   esr <- get_prerank(y[i, ], x[i, , ], prerank = "energy_score")
   loc <- get_prerank(y[i, ], x[i, , ], prerank = "mean")
   var <- get_prerank(y[i, ], x[i, , ], prerank = "variance")
-  vgr <- get_prerank(y[i, ], x[i, , ], w = w_mat, prerank = "variogram")
+  vgr <- get_prerank(y[i, ], x[i, , ], prerank = "variogram")
   ranks <- c(mvr, avr, bdr, esr, loc, var, vgr)
   names(ranks) <- c("mvr", "avr", "bdr", "esr", "loc", "var", "vgr")
   return(ranks)
@@ -399,7 +396,7 @@ rank_df <- sapply(1:n, function(i) {
   esr <- get_prerank(y[i, ], x[i, , ], prerank = "energy_score")
   loc <- get_prerank(y[i, ], x[i, , ], prerank = "mean")
   var <- get_prerank(y[i, ], x[i, , ], prerank = "variance")
-  vgr <- get_prerank(y[i, ], x[i, , ], w = w_mat, prerank = "variogram")
+  vgr <- get_prerank(y[i, ], x[i, , ], prerank = "variogram")
   ranks <- c(mvr, avr, bdr, esr, loc, var, vgr)
   names(ranks) <- c("mvr", "avr", "bdr", "esr", "loc", "var", "vgr")
   return(ranks)
@@ -427,7 +424,7 @@ rank_df <- sapply(1:n, function(i) {
   esr <- get_prerank(y[i, ], x[i, , ], prerank = "energy_score")
   loc <- get_prerank(y[i, ], x[i, , ], prerank = "mean")
   var <- get_prerank(y[i, ], x[i, , ], prerank = "variance")
-  vgr <- get_prerank(y[i, ], x[i, , ], w = w_mat, prerank = "variogram")
+  vgr <- get_prerank(y[i, ], x[i, , ], prerank = "variogram")
   ranks <- c(mvr, avr, bdr, esr, loc, var, vgr)
   names(ranks) <- c("mvr", "avr", "bdr", "esr", "loc", "var", "vgr")
   return(ranks)
@@ -453,7 +450,7 @@ rank_df <- sapply(1:n, function(i) {
   esr <- get_prerank(y[i, ], x[i, , ], prerank = "energy_score")
   loc <- get_prerank(y[i, ], x[i, , ], prerank = "mean")
   var <- get_prerank(y[i, ], x[i, , ], prerank = "variance")
-  vgr <- get_prerank(y[i, ], x[i, , ], w = w_mat, prerank = "variogram")
+  vgr <- get_prerank(y[i, ], x[i, , ], prerank = "variogram")
   ranks <- c(mvr, avr, bdr, esr, loc, var, vgr)
   names(ranks) <- c("mvr", "avr", "bdr", "esr", "loc", "var", "vgr")
   return(ranks)
@@ -481,7 +478,7 @@ rank_df <- sapply(1:n, function(i) {
   esr <- get_prerank(y[i, ], x[i, , ], prerank = "energy_score")
   loc <- get_prerank(y[i, ], x[i, , ], prerank = "mean")
   var <- get_prerank(y[i, ], x[i, , ], prerank = "variance")
-  vgr <- get_prerank(y[i, ], x[i, , ], w = w_mat, prerank = "variogram")
+  vgr <- get_prerank(y[i, ], x[i, , ], prerank = "variogram")
   ranks <- c(mvr, avr, bdr, esr, loc, var, vgr)
   names(ranks) <- c("mvr", "avr", "bdr", "esr", "loc", "var", "vgr")
   return(ranks)
@@ -507,7 +504,7 @@ rank_df <- sapply(1:n, function(i) {
   esr <- get_prerank(y[i, ], x[i, , ], prerank = "energy_score")
   loc <- get_prerank(y[i, ], x[i, , ], prerank = "mean")
   var <- get_prerank(y[i, ], x[i, , ], prerank = "variance")
-  vgr <- get_prerank(y[i, ], x[i, , ], w = w_mat, prerank = "variogram")
+  vgr <- get_prerank(y[i, ], x[i, , ], prerank = "variogram")
   ranks <- c(mvr, avr, bdr, esr, loc, var, vgr)
   names(ranks) <- c("mvr", "avr", "bdr", "esr", "loc", "var", "vgr")
   return(ranks)

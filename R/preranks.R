@@ -137,7 +137,7 @@ get_prerank <- function(y, x, prerank, return_rank = TRUE, ...) {
   varargs <- list(...)
   if (!is.function(prerank)) {
     if (prerank == "variogram") {
-      if (is.null(varargs$w)) varargs$w <- matrix(1, nrow = length(y), ncol = length(y))
+      if (is.null(varargs$h)) varargs$h <- 1
       if (is.null(varargs$p)) varargs$p <- 2
       if (is.null(varargs$std)) varargs$std <- TRUE
     }
@@ -159,7 +159,7 @@ get_prerank <- function(y, x, prerank, return_rank = TRUE, ...) {
   } else if (prerank == "FTE") {
     fte_rank(y, x, return_rank, t = varargs$t)
   } else if (prerank == "variogram") {
-    vg_rank(y, x, return_rank, w = varargs$w, p = varargs$p, std = varargs$std)
+    vg_rank(y, x, return_rank, h = varargs$h, p = varargs$p, std = varargs$std)
   }
 }
 
@@ -229,13 +229,23 @@ fte_rank <- function(y, x, t, return_rank = TRUE) {
 }
 
 # variogram
-vg_rank <- function(y, x, w, p, std, return_rank = TRUE) {
-  custom_rank(y, x, prerank = vario_func, return_rank, w = w, p = p, std = std)
+vg_rank <- function(y, x, h, p, std, return_rank = TRUE) {
+  custom_rank(y, x, prerank = vario_func, return_rank, h = h, p = p, std = std)
 }
 
 # variogram helper function
-vario_func <- function(x, w, p, std) {
-  g_x <- vario(x, w, p)
+vario_func <- function(x, h, p, std) {
+  d <- length(x)
+  if (length(h) > 1) {
+    g_x <- sapply(h, function(hh) {
+      w <- matrix(as.numeric(abs(outer(1:d, 1:d, FUN = "-")) == hh), nrow = d)
+      return(vario(x, w, p))
+    })
+    g_x <- -sum(g_x)
+  } else {
+    w <- matrix(as.numeric(abs(outer(1:d, 1:d, FUN = "-")) == h), nrow = d)
+    g_x <- -vario(x, w, p)
+  }
   if (std) g_x <- g_x/var(x)
   return(g_x)
 }
@@ -284,11 +294,11 @@ check_inputs <- function (y, x, prerank, return_rank, ...) {
       if (!is.numeric(varargs$t)) stop("'t' is not numeric")
       if (length(varargs$t) > 1) stop("'t' must be a single numeric value")
     } else if (prerank == "variogram") {
-      if (!is.numeric(varargs$w)) stop("'w' is not numeric")
-      if (!is.matrix(varargs$w)) stop("'w' must be a matrix")
-      if (dim(varargs$w)[1] != dim(x)[1] || dim(varargs$w)[2] != dim(x)[1])
-        stop("'w' must be a matrix with d rows and d columns")
-      if (any(varargs$w < 0)) stop("The weight matrix 'w' contans negative entries")
+      if (!is.null(varargs$h)) {
+        if (!is.numeric(varargs$h)) stop("'h' is not numeric")
+        if (any(varargs$h < 0)) stop("The lag 'h' contans negative entries")
+        if (any(varargs$h >= length(y))) stop("The lag 'h' exceeds the dimension of the data")
+      }
 
       if (!is.null(varargs$p)) {
         if (!is.numeric(varargs$p)) stop("'p' is not numeric")
