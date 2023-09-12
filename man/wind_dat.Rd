@@ -5,17 +5,21 @@
 \alias{wind_dat}
 \title{Gridded wind speed data}
 \format{
-## `wind_dat`
-
-A list with 5 elements:
+A list with 6 elements:
 \describe{
-  \item{fc}{Array of dimensions (33, 32, 5, 11, 209) containing the (re)forecast
-  wind speed for each longitude, latitude, year, ensemble member and time.}
-  \item{obs}{Array of dimensions (33, 32, 5, 209) containing the observed
-  wind speed for each longitude, latitude, year, and time.}
-  \item{lats}{Vector of latitudes of the grid points.}
-  \item{lons}{Vector of longitudes of the grid points.}
-  \item{times}{Days in the two year period for which the reforecasts are created.}
+  \item{obs}{Matrix of dimension (1045, 1056) containing the observed
+  wind speed for each date and grid point.}
+  \item{fc_ifs}{Array of dimension (1045, 1056, 11) containing the 11 IFS
+  ensemble members at each date and grid point.}
+  \item{fc_ecc}{Array of dimension (1045, 1056, 11) containing the 11
+  ensemble members obtained using ensemble copula coupling at each date
+  and grid point.}
+  \item{fc_ss}{Array of dimension (1045, 1056, 11) containing the 11
+  ensemble members obtained using the Schaake shuffle at each date
+  and grid point.}
+  \item{coord}{Latitude and longitude coordinates of the 1056 grid points.}
+  \item{valtime}{Vector of dates for which the forecasts and observations
+  are available.}
 }
 }
 \source{
@@ -26,16 +30,26 @@ data("wind_dat")
 }
 \description{
 A subset of gridded 10m wind speed forecasts and observations from the EUMETNET's
-post-processing benchmark dataset. Forecasts and observations are available on a
-grid over central Europe comprised of 33 longitudes and 32 latitudes.
+post-processing benchmark dataset.
 }
 \details{
-The forecasts are reforecasts from ECMWF's Integrated Forecasting System (IFS)
-with 11 ensemble members. Reforecasts are generated for the five years prior to
-each Monday and Thursday in 2017 and 2018. There are 209 Mondays and Thursdays
-in 2017 and 2018, resulting in 5*209=1045 forecast cases.
-}
-\examples{
-data("wind_dat")
+Forecasts and observations are available on a grid over central Europe comprised
+ of 33 longitudes and 32 latitudes.
+
+The forecasts are reforecasts from ECMWF's
+Integrated Forecasting System (IFS) with 11 ensemble members. Reforecasts are
+generated for the five years prior to each Monday and Thursday in 2017 and 2018.
+There are 209 Mondays and Thursdays in 2017 and 2018, resulting in 5*209=1045 forecast cases.
+
+The observations are ERA5 reanalysis fields on the same gridded domain.
+
+Ensemble forecasts are also provided that correspond to the output of two
+statistical post-processing methods applied to the IFS reforecasts. Both
+methods use an ensemble model output statistics framework to post-process the
+wind speed forecasts at each grid point - it is assumed that the wind speed
+follows a truncated logistic distribution. Quantiles from the truncated logistic
+distribution are then reordered using a relevant dependence template. Forecasts
+are provided for two dependence templates, obtained using ensemble copula coupling
+(ECC) and the Schaake shuffle (SS).
 }
 \keyword{datasets}
