@@ -94,9 +94,11 @@ and check whether this rank is uniformly distributed on the set $\{1, \dots, M +
 
 Due to the information they provide about forecast performance, rank histograms are well-established when evaluating ensemble forecasts. Multivariate adaptations have also been proposed to assess the calibration of multivariate ensemble forecasts, where we are interested in predicting several variables, time points, or locations simultaneously \citep[e.g.][]{GneitingEtAl2008,ThorarinsdottirEtAl2016}. Multivariate rank histograms introduce a so-called \emph{pre-rank function} that transforms the ensemble members and observations to univariate values. A univariate rank histogram can then be constructed by calculating the ranks of the transformed observations among the transformed ensemble members. Proposed approaches differ in the choice of transformation. \cite{AllenEtAl2023} argue that any function $\rho : \R^{d} \to \R$ can be used as a pre-rank function (where $d$ is the dimension of the multivariate forecasts and observations), and by choosing $\rho$ to measure a particular univariate summary statistic of the multivariate vectors, the resulting histograms will be easy to interpret and provide useful information regarding the systematic errors that occur in the forecasts.
 
+In this vignette, we document the \pkg{MultivCalibration} \proglang{R} package, which allows multivariate rank histograms to be applied in practice. The following section introduces multivariate probabilistic calibration. Section \ref{sec:examples} then demonstrates how multivariate calibration can be assessed using \pkg{MultivCalibration}, before the package is used to reproduce the results in \cite{AllenEtAl2023}. A simulation study is presented in Section \ref{sec:simulation}, and these multivariate rank histograms are then used to evaluate probabilistic forecasts of gridded wind speed fields over Europe in Section \ref{sec:application}. A brief discussion of possible extensions is presented in Section \ref{sec:discussion}.
+
 While we discuss calibration here in the context of forecast evaluation, the methods are also applicable when validating (multivariate) probabilistic models. In this case, the output of the model can be interpreted as a probabilistic forecast for the target variable, and we can then check the model fit using the methods discussed herein.
 
-In this vignette, we document the \pkg{MultivCalibration} \proglang{R} package, which allows multivariate rank histograms to be applied in practice. The following section introduces multivariate probabilistic calibration. Section \ref{sec:examples} then demonstrates how multivariate calibration can be assessed using \pkg{MultivCalibration}, before the package is used to reproduce the results in \cite{AllenEtAl2023}. A simulation study is presented in Section \ref{sec:simulation}, and these multivariate rank histograms are then used to evaluate probabilistic forecasts of gridded wind speed fields over Europe. A brief discussion of possible extensions is presented in Section \ref{sec:discussion}.
+
 
 
 \section{Multivariate calibration}\label{sec:calibration}
@@ -105,16 +107,16 @@ Suppose that our ensemble members and observations are now $d$-dimensional multi
 \[
 \rho: \R^{d}\times \underbrace{\R^d \times \dots\times \R^d}_{\text{$M$ times}} \to \R
 \]
-that transforms the observation and the $M$ ensemble members to univariate values. A multivariate forecast is said to be probabilistically calibrated with respect to a pre-rank function $\rho$ if the rank of $\rho(\bY)$ among $\rho(\bX_{1}), \dots, \rho(\bX_{M})$ is uniformly distributed on the set $\{1, \dots, M + 1\}$ of possible ranks. This can be assessed by calculating the rank of several realisations of $\rho(\bY)$ among the corresponding transformed ensemble members, and plotting these ranks in a histogram. This histogram of the ranks of the transformed observations is typically called a multivariate rank histogram.
+that transforms the observation and the $M$ ensemble members to univariate values. A multivariate forecast is said to be probabilistically calibrated with respect to a pre-rank function $\rho$ if the rank of $\rho(\bY, \bX_{1}, \dots, \bX_{M})$ among $\rho(\bX_{1}, \bY, \bX_{2}, \dots, \bX_{M}), \dots, \rho(\bX_{M}, \bY, \bX_{1}, \dots, \bX_{M-1})$ is uniformly distributed on the set $\{1, \dots, M + 1\}$ of possible ranks. This can be assessed by calculating the rank of several realisations of $\rho(\bY, \bX_{1}, \dots, \bX_{M})$ among the corresponding transformed ensemble members, and plotting these ranks in a histogram. This histogram of the ranks of the transformed observations is typically called a multivariate rank histogram.
 
 \cite{GneitingEtAl2008} demonstrate that any pre-rank function can be chosen that is invariant to permutations of the final $M$ arguments. \cite{AllenEtAl2023} remark that any function that does not depend on the final $M$ elements is trivially invariant to permutations of them, and is thus a valid pre-rank function. These are termed \emph{simple pre-rank functions}. If multivariate forecasts are auto-calibrated \citep[see][for details]{Tsyplakov2013,GneitingResin2022} then they are also probabilistically calibrated with respect to any simple pre-rank function. These simple pre-rank functions essentially choose a univariate summary statistic that quantifies some relevant characteristic of the multivariate observations, and then assess to what extent the forecasts are probabilistically calibrated when predicting this summary statistic.
 
 
 \subsection{Pre-rank functions}
 
-The choice of pre-rank function will determine how to interpret the resulting histogram. Any pre-rank function can be chosen depending on what information is of interest to the forecast users. If we are interested in predicting extreme events, we can choose a pre-rank function that quantifies the extremity of the multivariate forecast; if we are interested in the dependence between different dimensions, we can introduce a pre-rank function that quantifies this dependence. These can readily be employed in the framework above, allowing us to assess the calibration of predictions for these univariate quantities. Of course, information is lost when converting the multivariate forecasts and observations to univariate values. It is therefore generally recommended that several pre-rank functions are employed.
+The choice of pre-rank function will determine how to interpret the resulting histogram. Any pre-rank function can be chosen depending on what information is of interest to the forecast users. If we are interested in predicting extreme events, we can choose a pre-rank function that quantifies the extremity of the multivariate observation; if we are interested in the dependence between different dimensions, we can introduce a pre-rank function that quantifies this dependence. These can readily be employed in the framework above, allowing us to assess the calibration of predictions for these univariate quantities. Of course, information is lost when converting the multivariate forecasts and observations to univariate values. It is therefore generally recommended that several pre-rank functions are employed.
 
-Different pre-rank functions have been proposed in the literature. \cite{SmithHansen2004} and \cite{Wilks2004} proposed using the inverse length of the minimum spanning tree of the set $\bX_{1}, \dots, \bX_{M}$ as a pre-rank function for $\bY$. The pre-rank of $\bX_{1}$ is the inverse length of the minimum spanning tree of the set $\bY, \bX_{2}, \dots, \bX_{M}$, with the ensemble member of interest replaced by the observation, and similarly for the other ensemble members. This is also the case for the pre-rank functions introduced below.
+Different pre-rank functions have been proposed in the literature. \cite{SmithHansen2004} and \cite{Wilks2004} proposed using the inverse length of the minimum spanning tree of the set $\bX_{1}, \dots, \bX_{M}$ as a pre-rank function for $\bY$. The pre-rank of $\bX_{1}$ is the inverse length of the minimum spanning tree of the set $\bY, \bX_{2}, \dots, \bX_{M}$, with the ensemble member of interest replaced by the observation, and similarly for the other ensemble members.
 
 \cite{GneitingEtAl2008} introduced the \emph{multivariate rank} as a pre-rank function,
 \[
@@ -138,13 +140,13 @@ This representation of the band-depth rank pre-rank function assumes that there 
 \]
 where $\| \cdot \|$ denotes the Euclidean distance in $\R^{d}$.
 
-\cite{ScheuererHamill2018} propose using the fraction of threshold exceedances,
+\cite{ScheuererHamill2018} proposed using the fraction of threshold exceedances,
 \[
   \rho_{FTE}(\bY; t) = \frac{1}{d} \sum_{j=1}^{d} \ind \{ Y_{j} > t \}
 \]
 for some threshold $t \in \R$. In contrast to the pre-rank functions listed above, the fraction of threshold exceedances does not depend on all ensemble members, and is therefore a simple pre-rank function. In this case, we omit the ensemble members from the function arguments.
 
-\cite{AllenEtAl2023} extend this to introduce several simple pre-rank functions. For example, the mean of the multivariate vectors could be used as a measure of the average behaviour across all dimensions,
+\cite{AllenEtAl2023} extended this to introduce several simple pre-rank functions. For example, the mean of the multivariate vectors could be used as a measure of the average behaviour across all dimensions,
 \[
   \rho_{loc}(\bY) = \bar{Y} = \frac{1}{d} \sum_{j=1}^{d} Y_{j}.
 \]
@@ -156,13 +158,12 @@ while the variogram quantifies the dependence between different dimensions,
 \[
   \rho_{dep}(\bY; h) = -\frac{\gamma_{\bY}(h)}{s_{\bY}^{2}},
 \]
-for some lag $h \in \N$, where
+for some lag $h \in \{1, \dots, d - 1\}$, where
 \[
   \gamma_{\bY}(h) = \frac{1}{2 (d - h)} \sum_{j = 1}^{d - h} | Y_{j} - Y_{j + h} | ^{2}
 \]
 is an empirical variogram at lag $h$. The negative sign ensures that a larger value of $\rho_{dep}$ indicates a larger dependence, in keeping with $\rho_{loc}$ and $\rho_{sc}$ above. This simplifies the interpretation of the resulting multivariate rank histograms.
 
-Further details regarding these pre-rank functions can be found in \cite{AllenEtAl2023}, where additional pre-rank functions are introduced when evaluating probabilistic spatial field forecasts.
 
 \subsection{Pre-rank functions for gridded objects}
 
@@ -198,7 +199,7 @@ The \pkg{MultivCalibration} package has the functionality to compute the pre-ran
 \begin{Code}
 get_prerank(y, x, prerank, return_rank = TRUE, ...)
 \end{Code}
-which takes as inputs an observation vector \code{y} of length $d$, and a matrix of ensemble members \code{x} with $d$ rows and $M$ columns; as above $d$ is the dimension of the multivariate objects and $M$ is the number of ensemble members. While \code{get_prerank()} therefore calculates the pre-rank corresponding to one multivariate forecast and observation, the \code{apply()} functions or \code{for} loops can be used to sequentially apply \code{get_prerank()} to multiple forecasts.
+which takes as inputs an observation vector \code{y} of length $d$, and a matrix of ensemble members \code{x} with $d$ rows and $M$ columns; as above, $d$ is the dimension of the multivariate objects and $M$ is the number of ensemble members. While \code{get_prerank()} therefore calculates the pre-rank corresponding to one multivariate forecast and observation, the \code{apply()} functions or \code{for} loops can be used to sequentially apply \code{get_prerank()} to multiple forecasts.
 
 The argument \code{prerank} specifies which pre-rank function should be applied to the multivariate forecasts and ensemble members. This can either be a string corresponding to one of several in-built options, or it can be a user-specified function. The in-built pre-rank functions currently available are the multivariate rank (\code{prerank = "multivariate_rank"}), the average rank (\code{prerank = "average_rank"}), the band-depth rank (\code{prerank = "band_depth"}), the mean (\code{prerank = "mean"}), the variance (\code{prerank = "variance"}), the energy score (\code{prerank = "energy_score"}), the fraction of threshold exceedances (\code{prerank = "fte_rank"}), and the variogram (\code{prerank = "variogram"}).
 
@@ -233,14 +234,18 @@ prerank <- function(z, k) mean((z - mean(z))^k)
 get_prerank(y, x, prerank = prerank, return_rank = FALSE, k = 3)
 @
 
+Some in-built pre-rank functions also require variable arguments. For example, to calculate the fraction of threshold exceedances, the user must specify a threshold \code{t}, a single numeric value. Similarly, the variogram pre-rank function requires a lag \code{h}. This lag can either be a single integer, or a vector of integers. In the latter case, the variogram is calculated for all integers in the vector, and then summed to return a single value.
 
-While \code{get_prerank()} assumes that \code{y} is a vector, pre-ranks are also available when the observations and ensemble members are matrices. The \pkg{MultivCalibration} additionally exports a function \code{get_prerank_gr()} that calculates pre-ranks corresponding to gridded objects.
+While \code{get_prerank()} assumes that \code{y} is a vector, pre-rank functions are also available when the observations and ensemble members are matrices. The \pkg{MultivCalibration} additionally exports a function \code{get_prerank_gr()} that calculates pre-ranks corresponding to gridded objects.
 \begin{Code}
 get_prerank_gr(y, x, prerank, return_rank = TRUE, ...)
 \end{Code}
 The input \code{y} is a numeric matrix with $p$ rows and $q$ columns, while the ensemble forecast \code{x} is an array of dimension $(p, q, M)$.
 
 The \code{prerank} argument can again be either a string corresponding to a list of in-built options for the pre-rank function, or a user-specified function. In addition to the pre-rank functions available for \code{get_prerank()}, the isotropy pre-rank function is also available (\code{prerank = "isotropy"}).
+
+In this case, the variogram pre-rank function requires an additional argument \code{h} that is a vector of length two. This denotes the spatial lag at which the variogram should be calculated. If \code{h} is a matrix with two columns, then the variogram is computed for all rows of this matrix, and these are again summed to return a single value. The isotropy pre-rank function also depends on a parameter \code{h} that can be specified by the user. This must be a single integer, denoting the lag at which the variogram differences are calculated; by default, the isotropy pre-rank function uses \code{h = 1}.
+
 
 
 
@@ -253,13 +258,13 @@ Suppose observations are drawn from a multivariate normal distribution with mean
 \begin{equation*}
     \Sigma_{i, j} = \sigma^{2} \hspace{0.05cm} \exp\left( - \frac{|i - j|}{\tau} \right), \quad i, j = 1, \dots, d.
 \end{equation*}
-The parameter $\sigma^{2} > 0$ controls the variance of the observations along each dimension, while $\tau > 0$ determines how quickly the correlation decays as the distance between the dimensions increases. In this sense, there is assumed to be an ordering of the variables, as is typically the case in a time series or spatial setting. We set $d = 10$, $\sigma^{2} = 1$, and $\tau = 1$. Analogous conclusions are also drawn from other configurations.
+The parameter $\sigma^{2} > 0$ controls the variance of the observations along each dimension, while $\tau > 0$ determines how quickly the correlation decays as the distance between the dimensions increases. We set $d = 10$, $\sigma^{2} = 1$, and $\tau = 1$. Analogous conclusions are also drawn from other configurations.
 
 For each observation, $M = 20$ ensemble members are drawn at random from a mis-specified multivariate normal distribution. We consider six possible mis-specifications, corresponding to under- and over-estimation of the mean vector $\mathbf{\mu}$, scale parameter $\sigma^{2}$, and correlation parameter $\tau$.
 
 <<sim_study_mvn_setup>>=
 d <- 10       # dimensions
-n <- 100      # number of iterations (10000 is used in Allen et al. (2023))
+n <- 1000     # number of iterations (10000 is used in Allen et al. (2023))
 M <- 20       # number of samples from the forecast distribution
 
 sig2 <- 1     # variance parameter
@@ -275,7 +280,7 @@ Sig_y <- outer(1:d, 1:d, function(i, j) sig2*exp(-abs(i - j)/tau))
 y <- mvrnorm(n, mu = mu_y, Sigma = Sig_y)
 @
 
-Firstly, consider errors in the mean. Suppose that the forecasts are obtained from a multivariate normal distribution with the correct covariance matrix, but with mean vector $\mu = (-0.5, \dots, -0.5)$ (of length $d$).
+Firstly, consider errors in the mean. Suppose that the forecasts are obtained from a multivariate normal distribution with the correct covariance matrix, but with mean vector $\mu = (-0.5, \dots, -0.5)$ ($d$ times).
 
 <<sim_study_mvn_ens_1>>=
 mu_x <- rep(-0.5, d)
@@ -314,9 +319,9 @@ head(rank_df, 10)
 
 To display the multivariate rank histograms corresponding to each pre-rank function, we first define a function \code{pit_hist}. This function is also available from the \pkg{WeightedForecastVerification} package on GitHub, which can be installed using \pkg{devtools}
 
-\begin{Code}
+<<WeightedForecastVerification, eval=FALSE>>=
 devtools::install_github("sallen12/WeightedForecastVerification")
-\end{Code}
+@
 
 <<pit_hist_function, echo=FALSE>>=
 pit_hist <- function(z, bins = NULL, ranks = TRUE, title = NULL, ymax = NULL,
@@ -514,13 +519,13 @@ plot_list[["ncol"]] <- 1
 plot_corr2 <- do.call(grid.arrange, plot_list)
 @
 
-Repeating this for all pre-rank functions and all six types of misspecification, we can plot the multivariate rank histograms together.
+Having repeated this for all pre-rank functions and all six types of misspecification, Figure~\ref{fig:mvnhists} displays the multivariate rank histograms corresponding to all pre-rank functions and misspecifications.
 
 \begin{figure}
 <<plot_histograms, echo=FALSE, dev='pdf', fig.width=10.4, fig.height=10.4, fig.align='center', out.width = '\\linewidth'>>=
 grid.arrange(plot_mean1, plot_mean2, plot_sc1, plot_sc2, plot_corr1, plot_corr2, ncol = 6)
 @
-\caption{Multivariate rank histogram for seven pre-rank functions and the six types of mis-specification in the multivariate forecast distributions.}
+\caption{Multivariate rank histogram for seven pre-rank functions in the multivariate normal distribution simulation study, when the forecast distributions: (a) under-estimate the mean, (b) over-estimate the mean, (c) under-estimate the variance, (d) over-estimate the variance, (e) under-estimate the correlation, (f) over-estimate the correlation.}
 \label{fig:mvnhists}
 \end{figure}
 
@@ -536,7 +541,7 @@ We can use the \pkg{geoR} package to obtain realisations of a Gaussian random fi
 
 <<sim_study_grf_obs>>=
 d <- 30^2
-n <- 10
+n <- 100
 M <- 20
 sig2 <- 1
 tau <- 1
@@ -577,7 +582,7 @@ x <- x$data
 dim(x) <- c(sqrt(d), sqrt(d), M, n)
 @
 
-We can use the \code{get_prerank_gr()} function to extract the multivariate rank for different pre-rank functions, and use \code{sapply()} to loop over all $n$ observations. Note that the variogram, fraction of threshold exceedances, and isotropy pre-rank functions require additional arguments corresponding to the threshold or spatial lag(s).
+We can use the \code{get_prerank_gr()} function to extract the multivariate rank for different pre-rank functions, and use \code{sapply()} to loop over all $n$ observations. Note that the variogram and fraction of threshold exceedances pre-rank functions require additional arguments corresponding to the spatial lag(s) or threshold.
 
 <<sim_study_grf_rankdf_1>>=
 t <- 1
@@ -637,7 +642,7 @@ plot_sc2 <- do.call(grid.arrange, plot_list)
 
 We can similarly calculate the pre-ranks when the ensemble forecasts over-estimate the scale of the observed fields, and when there are errors in the correlation structure,
 
-<<sim_study_grf_rankdf_3_dat, echo=FALSE, fig.show='hide'>>=
+<<sim_study_grf_rankdf_3_dat, fig.show='hide'>>=
 tau_x <- 0.5
 x <- grf(d, grid = "reg", cov.pars = c(sig2, tau_x), nsim = n*M, messages = F)
 @
@@ -759,9 +764,295 @@ The resulting multivariate rank histograms are displayed in Figure \ref{fig:grfh
 <<plot_histograms_grf, echo=FALSE, dev='pdf', fig.width=10.4, fig.height=10.4, fig.align='center', out.width = '\\linewidth'>>=
 gridExtra::grid.arrange(plot_sc1, plot_sc2, plot_corr1, plot_corr2, plot_iso1, plot_iso2, ncol = 6)
 @
-\caption{Multivariate rank histogram for seven pre-rank functions and the six types of mis-specification in the forecast fields.}
+\caption{Multivariate rank histogram for seven pre-rank functions in the Gaussian random field simulation study, when the forecast distributions: (a) under-estimate the variance, (b) over-estimate the variance, (c) under-estimate the correlation, (d) over-estimate the correlation, (e) under-estimate the isotropy, (f) over-estimate the isotropy.}
 \label{fig:grfhists}
 \end{figure}
+
+
+
+
+
+\section{Case study}\label{sec:application}
+
+\subsection{Data}
+
+We now reproduce the results in \cite{AllenEtAl2023}. Consider 10m wind speed forecasts and observations from the European Meteorological Network's (EUMETNET) post-processing benchmark dataset \citep[EUPPBench;][]{DemaeyerEtAl2023}. For every Monday and Thursday in 2017 and 2018, five years of reforecasts have been generated using the European Center for Medium-range Weather Forecasts' (ECMWF) Integrated Forecasting System (IFS). The ensemble forecasts are available at a lead time of five days and are comprised of $M = 11$ ensemble members.
+
+The forecasts are compared to ERA5 reanalyses \citep{HersbachEtAl2020}, which provide a best guess for the observed wind speed fields. The forecasts and observations are on a regular longitude-latitude grid that covers a small domain in central Europe (2.5-10.5E, 45.75-53.5N). The grid has a horizontal resolution of 0.25$^{\circ}$ and is comprised of 33 distinct longitudes and 32 latitudes.
+
+The IFS ensemble forecasts are compared to forecasts obtained from two distinct statistical post-processing methods. The goal of post-processing is to remove systematic errors that manifest in the output of numerical weather models. Both post-processing methods assume that the future wind speed at each grid point follows a logistic distribution that is truncated below at zero, with location and scale parameters that depend linearly on the IFS ensemble mean and standard deviation, respectively. These parameters are estimated from fifteen years of reforecasts prior to the time period under consideration.
+
+To obtain forecast distributions that have a realistic spatial dependence structure, evenly-spaced quantiles are extracted from the univariate post-processed distributions, and then reordered according to a relevant dependence template. Two approaches are considered here: ensemble copula coupling (ECC), which uses the raw IFS ensemble forecasts as a template to reorder the post-processed forecast distributions \citep{SchefzikEtAl2013}; and the Schaake Shuffle, which instead uses a random selection of past multivariate observations to construct the dependence template \citep{ClarkEtAl2004}. The calibration of the forecast fields obtained from these two post-processing methods is compared to the calibration of the raw numerical model output.
+
+The forecast and observation fields can be obtained from the \pkg{MultivCalibration} package using
+<<load_data>>=
+data("wind_dat")
+list2env(wind_dat, globalenv()) # convert list elements to global environment
+rm(wind_dat)
+@
+
+
+\subsection{Results}
+
+Firstly, consider the calibration of the forecasts at each grid point. Rank histograms for the IFS and post-processed forecasts are displayed in Figure~\ref{fig:uvhists}, with the ranks aggregated over all times and grid points; the ECC and Schaake shuffle differ only in how they reorder the post-processed distributions, so result in the same rank histograms. The IFS forecasts are slightly under-dispersed, resulting in a $\cup$-shaped histogram, whereas the post-processed forecasts appear better calibrated.
+
+<<get_univ_ranks, fig.show='hide'>>=
+# function to get univariate ranks
+get_univ_ranks <- function(y, ens) {
+  S <- abind::abind(y, ens, along = 3)
+  S_ranks <- apply(S, c(1, 2), rank, ties.method = "random")
+  y_ranks <- t(S_ranks[1, , ])
+  return(y_ranks)
+}
+
+univ_ranks <- get_univ_ranks(obs, fc_ifs)
+plot_ifs <-
+  pit_hist(as.vector(univ_ranks), ymax = 0.31, title = "IFS ensemble")
+
+univ_ranks_pp <- get_univ_ranks(obs, fc_ecc)
+plot_pp <-
+  pit_hist(as.vector(univ_ranks_pp), ymax = 0.31, title = "Post-processed")
+@
+
+\begin{figure}
+<<plot_univ_ranks, echo=FALSE, dev='pdf', fig.width=10.4, fig.height=3, fig.align='center', out.width = '\\linewidth'>>=
+grid.arrange(plot_ifs, plot_pp, nrow = 1)
+@
+\caption{Univariate rank histograms for the IFS and post-processed ensemble forecasts. A dotted red line indicates a flat histogram. Ranks have been aggregated across all grid points.}
+\label{fig:uvhists}
+\end{figure}
+
+Multivariate rank histograms can be obtained using the \pkg{MultivCalibration} functionality. To account for the spatial structure in the observation and forecast fields, they are first converted from vectors to matrices using a function \code{conv_to_grid()}, which is not exported from the package. The function \code{get_prerank_gr()} can then be applied to the resulting grids. For example, for the IFS ensemble forecasts, we can use
+
+<<conv_to_grid, echo=FALSE>>=
+lats <- unique(coord[, 1])
+lons <- unique(coord[, 2])
+t <- 6
+
+conv_to_grid <- function(z, lats, lons) {
+  z <- matrix(z, ncol = length(lons), byrow = T)
+  z <- z[nrow(z):1, ] # the first row is the highest latitude
+  return(z)
+}
+@
+
+<<get_multiv_ranks>>=
+ranks_ifs <- sapply(1:nrow(obs), function(i) {
+  # convert forecasts and observations to matrices
+  y <- conv_to_grid(obs[i, ], lats, lons)
+  x <- apply(fc_ifs[i, , ], 2, conv_to_grid, lats, lons, simplify = F)
+  x <- simplify2array(x)
+
+  # apply pre-rank functions
+  avr <- get_prerank_gr(y, x, prerank = "average_rank")
+  bdr <- get_prerank_gr(y, x, prerank = "band_depth")
+  loc <- get_prerank_gr(y, x, prerank = "mean")
+  var <- get_prerank_gr(y, x, prerank = "variance")
+  vgr <- get_prerank_gr(y, x, h = h, prerank = "variogram")
+  fte <- get_prerank_gr(y, x, t = t, prerank = "FTE")
+  iso <- get_prerank_gr(y, x, prerank = "isotropy")
+  ranks <- c(avr, bdr, loc, var, vgr, fte, iso)
+  names(ranks) <- c("avr", "bdr", "loc", "var", "vgr", "fte", "iso")
+  return(ranks)
+})
+ranks_ifs <- data.frame(t(ranks_ifs))
+@
+
+While only in-built pre-rank functions are considered here, alternative custom functions could also have been studied. This can be repeated for the post-processed forecasts, and multivariate rank histograms for all three methods are displayed in Figure~\ref{fig:mvhists}. The IFS forecasts appear calibrated with respect to the average rank, scale, and fraction of threshold exceedance pre-rank functions, but miscalibrated when assessed using the band-depth, dependence, and isotropy pre-rank functions. The two post-processing methods perform similarly: post-processing removes the errors in the band-depth pre-rank function, resulting in a more uniform histogram; however, the forecasts still exhibit large errors in the isotropy and the dependence between the wind speed at neighbouring grid points. This is slightly weaker for the Schaake shuffle forecasts.
+
+<<get_multiv_hists, echo=FALSE, fig.show='hide'>>=
+
+plot_list <- lapply(seq_along(pr_names), function(i) {
+  pit_hist(ranks_ifs[[i]], ylab = pr_names[i], ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+})
+plot_list[["ncol"]] <- 1
+plot_ifs <- do.call(grid.arrange, plot_list)
+
+
+# ecc
+ranks_ecc <- sapply(1:nrow(obs), function(i) {
+  # convert forecasts and observations to matrices
+  y <- conv_to_grid(obs[i, ], lats, lons)
+  x <- apply(fc_ecc[i, , ], 2, conv_to_grid, lats, lons, simplify = F)
+  x <- simplify2array(x)
+
+  # apply pre-rank functions
+  avr <- get_prerank_gr(y, x, prerank = "average_rank")
+  bdr <- get_prerank_gr(y, x, prerank = "band_depth")
+  loc <- get_prerank_gr(y, x, prerank = "mean")
+  var <- get_prerank_gr(y, x, prerank = "variance")
+  vgr <- get_prerank_gr(y, x, h = h, prerank = "variogram")
+  fte <- get_prerank_gr(y, x, t = t, prerank = "FTE")
+  iso <- get_prerank_gr(y, x, prerank = "isotropy")
+  ranks <- c(avr, bdr, loc, var, vgr, fte, iso)
+  names(ranks) <- c("avr", "bdr", "loc", "var", "vgr", "fte", "iso")
+  return(ranks)
+})
+ranks_ecc <- data.frame(t(ranks_ecc))
+
+plot_list <- lapply(seq_along(pr_names), function(i) {
+  pit_hist(ranks_ecc[[i]], ylab = "", ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+})
+plot_list[["ncol"]] <- 1
+plot_ecc <- do.call(grid.arrange, plot_list)
+
+
+# schaake shuffle
+ranks_ss <- sapply(1:nrow(obs), function(i) {
+  # convert forecasts and observations to matrices
+  y <- conv_to_grid(obs[i, ], lats, lons)
+  x <- apply(fc_ss[i, , ], 2, conv_to_grid, lats, lons, simplify = F)
+  x <- simplify2array(x)
+
+  # apply pre-rank functions
+  avr <- get_prerank_gr(y, x, prerank = "average_rank")
+  bdr <- get_prerank_gr(y, x, prerank = "band_depth")
+  loc <- get_prerank_gr(y, x, prerank = "mean")
+  var <- get_prerank_gr(y, x, prerank = "variance")
+  vgr <- get_prerank_gr(y, x, h = h, prerank = "variogram")
+  fte <- get_prerank_gr(y, x, t = t, prerank = "FTE")
+  iso <- get_prerank_gr(y, x, prerank = "isotropy")
+  ranks <- c(avr, bdr, loc, var, vgr, fte, iso)
+  names(ranks) <- c("avr", "bdr", "loc", "var", "vgr", "fte", "iso")
+  return(ranks)
+})
+ranks_ss <- data.frame(t(ranks_ss))
+
+plot_list <- lapply(seq_along(pr_names), function(i) {
+  pit_hist(ranks_ss[[i]], ylab = "", ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+})
+plot_list[["ncol"]] <- 1
+plot_ss <- do.call(grid.arrange, plot_list)
+
+@
+
+\begin{figure}
+<<plot_mv_hists, echo=FALSE, fig.width=10.4, fig.height=10.4, fig.align='center', out.width = '\\linewidth'>>=
+grid.arrange(plot_ifs, plot_ecc, plot_ss, ncol = 3)
+@
+\caption{Multivariate rank histograms corresponding to several pre-rank functions for the IFS (left), ECC (centre), and Schaake shuffle (right) forecast fields.}
+\label{fig:mvhists}
+\end{figure}
+
+While rank histograms provide a graphical visualisation of multivariate forecast calibration, a formal test for calibration can be derived by checking whether the histogram is flat. This can be achieved sequentially over time using e-values. Technical details about e-values can be found in \cite{ArnoldEtAl2021} and \cite{AllenEtAl2023}, and they can be applied in practice using the \code{e_rank_histogram()} and \code{evalue_combine_h()} functions in the \pkg{epit} package. This package is not available on CRAN, but can be installed using \pkg{devtools}
+
+<<epit, eval=FALSE>>=
+devtools::install_github("ahenzi/epit")
+@
+
+We can write a wrapper to apply these functions to extract a time series of e-values for each pre-rank function and forecasting method. For example, consider the band-depth rank
+
+<<get_evals>>=
+get_evals <- function(r, lag, m, n0 = 1, strategy = "betabinom") {
+  evals <- epit::e_rank_histogram(r = r, h = lag,
+                                  m = m, options = list(n0 = n0),
+                                  strategy = strategy)$evalues_h
+  evals <- epit:::evalue_combine_h(lapply(evals, function(x) x$e))
+  return(evals)
+}
+
+evals_ifs <- get_evals(r = ranks_ifs$bdr, lag = 5, m = 11, n0 = 20)
+evals_ecc <- get_evals(r = ranks_ecc$bdr, lag = 5, m = 11, n0 = 20)
+evals_ss <- get_evals(r = ranks_ss$bdr, lag = 5, m = 11, n0 = 20)
+@
+
+This can be repeated for other pre-rank functions. Figure~\ref{fig:evals} displays the e-values corresponding to the band-depth, variance, and variogram pre-rank functions. An increasing e-value suggests the forecasts are becoming increasingly miscalibrated, and a horizontal line has been added to the plots that corresponds to the critical value of a hypothesis test for calibration at the 5\% level.
+
+<<get_all_evals, echo=FALSE>>=
+alpha <- 0.05
+
+df <- data.frame(x = 1:nrow(obs), e = c(evals_ifs, evals_ecc, evals_ss),
+                 mth = rep(c(" IFS", "ECC", "SS"), each = length(evals_ifs)))
+plot_bdr <- ggplot() + geom_line(data = df, aes(x = x, y = e, col = mth)) +
+  geom_hline(aes(yintercept = 3*(exp(1)*log(5))/alpha), lty = "dotted") +
+  geom_vline(aes(xintercept = (1:5)*(nrow(obs)/5)), col = "grey", alpha = 0.3) +
+  scale_y_continuous(name = "Cumulative e-value", trans = "log",
+                     limits = c(1e-2, 1e12),
+                     breaks = scales::trans_breaks("log10", function(x) 10^x),
+                     labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_x_continuous(name = "Day",
+                     breaks = seq(200, 1400, 200),
+                     expand = c(0, 0)) +
+  theme_bw() +
+  theme(panel.grid = element_blank(), legend.title = element_blank(),
+        legend.justification = c(0, 1), legend.position = c(0.01, 0.99)) +
+  guides(col = guide_legend(nrow = 1)) +
+  ggtitle("Band-depth")
+
+
+# scale
+evals_ifs <- get_evals(r = ranks_ifs$var, lag = 5, m = 11, n0 = 20)
+evals_ecc <- get_evals(r = ranks_ecc$var, lag = 5, m = 11, n0 = 20)
+evals_ss <- get_evals(r = ranks_ss$var, lag = 5, m = 11, n0 = 20)
+
+df <- data.frame(x = 1:nrow(obs), e = c(evals_ifs, evals_ecc, evals_ss),
+                 mth = rep(c(" IFS", "ECC", "SS"), each = length(evals_ifs)))
+plot_var <- ggplot() + geom_line(data = df, aes(x = x, y = e, col = mth)) +
+  geom_hline(aes(yintercept = 3*(exp(1)*log(5))/alpha), lty = "dotted") +
+  geom_vline(aes(xintercept = (1:5)*(nrow(obs)/5)), col = "grey", alpha = 0.3) +
+  scale_y_continuous(name = "Cumulative e-value", trans = "log",
+                     limits = c(1e-2, 1e12),
+                     breaks = scales::trans_breaks("log10", function(x) 10^x),
+                     labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_x_continuous(name = "Day",
+                     breaks = seq(200, 1400, 200),
+                     expand = c(0, 0)) +
+  theme_bw() +
+  theme(panel.grid = element_blank(), legend.title = element_blank(),
+        legend.justification = c(0, 1), legend.position = c(0.01, 0.99)) +
+  guides(col = guide_legend(nrow = 1)) +
+  ggtitle("Variance")
+
+
+# dependence
+evals_ifs <- get_evals(r = ranks_ifs$vgr, lag = 5, m = 11, n0 = 20)
+evals_ecc <- get_evals(r = ranks_ecc$vgr, lag = 5, m = 11, n0 = 20)
+evals_ss <- get_evals(r = ranks_ss$vgr, lag = 5, m = 11, n0 = 20)
+
+df <- data.frame(x = 1:nrow(obs), e = c(evals_ifs, evals_ecc, evals_ss),
+                 mth = rep(c(" IFS", "ECC", "SS"), each = length(evals_ifs)))
+plot_vgr <- ggplot() + geom_line(data = df, aes(x = x, y = e, col = mth)) +
+  geom_hline(aes(yintercept = 3*(exp(1)*log(5))/alpha), lty = "dotted") +
+  geom_vline(aes(xintercept = (1:5)*(nrow(obs)/5)), col = "grey", alpha = 0.3) +
+  scale_y_continuous(name = "Cumulative e-value", trans = "log",
+                     limits = c(1e-2, 1e12),
+                     breaks = scales::trans_breaks("log10", function(x) 10^x),
+                     labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  scale_x_continuous(name = "Day",
+                     breaks = seq(200, 1400, 200),
+                     expand = c(0, 0)) +
+  theme_bw() +
+  theme(panel.grid = element_blank(), legend.title = element_blank(),
+        legend.justification = c(1, 0), legend.position = c(0.99, 0.01)) +
+  guides(col = guide_legend(nrow = 1)) +
+  ggtitle("Variogram")
+@
+
+The e-values reinforce the conclusions drawn from the multivariate rank histograms. The IFS forecasts are significantly miscalibrated with respect to the band-depth pre-rank function, while the post-processed forecasts appear calibrated. Whereas all three forecast methods are severely miscalibrated when interest is on the dependence between wind speeds at neighbouring locations. In contrast, all three methods, including the raw IFS forecasts, are calibrated with respect to the variance in the wind speed among all grid points.
+
+\begin{figure}
+<<plot_evals, echo=FALSE, fig.width=10.4, fig.height=3, fig.align='center', out.width = '\\linewidth'>>=
+grid.arrange(plot_bdr, plot_var, plot_vgr, nrow = 1)
+@
+\caption{E-values for the three forecasting methods as a function of time, corresponding to three pre-rank functions. When the e-value exceeds the horizontal dotted line, there is significant evidence to suggest that the forecast fields are miscalibrated with respect to the associated pre-rank function at the 5\% level.}
+\label{fig:evals}
+\end{figure}
+
+Finally, since multivariate forecast calibration is assessed using multiple pre-rank functions, one might ask what constitutes a good set of pre-rank functions? A collection of pre-rank functions will be most useful when the individual pre-rank functions provide complementary information. To assess this for this application, we can calculate the correlation between the ranks obtained using different pre-rank functions.
+
+<<get_srcc>>=
+k <- ncol(ranks_ifs)
+srcc <- sapply(1:k, function(i) sapply(1:k, function(j)
+  cor(ranks_ifs[[i]], ranks_ifs[[j]])
+))
+rownames(srcc) <- colnames(srcc) <- colnames(ranks_ifs)
+print(round(srcc, 2))
+@
+
+Results are shown for the raw IFS forecasts, though this could easily be repeated for the two post-processing methods. There is a strong positive correlation between the average rank and location pre-rank functions, which both assess the mean behaviour of the spatial fields, and also the FTE pre-rank function. There is also strong positive correlation between the scale and dependence pre-rank functions. The band-depth and isotropy pre-rank functions, on the other hand, exhibit relatively low correlations with the other pre-rank functions, making them particularly useful in this application.
+
+
+
 
 
 \section{Discussion}\label{sec:discussion}
