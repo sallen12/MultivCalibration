@@ -32,16 +32,25 @@
 #' The in-built pre-rank functions currently available are the multivariate rank
 #' (\code{prerank = "multivariate_rank"}), the average rank (\code{"average_rank"}),
 #' the band-depth rank (\code{"band_depth"}), the mean (\code{"mean"}), the variance
-#' (\code{"variance"}), the energy score (\code{"energy_score"}), and the
-#' fraction of threshold exceedances (\code{"fte_rank"}).
-#' Pre-rank functions will later be added for the variogram, isotropy, and
-#' minimum spanning tree. See references for details.
+#' (\code{"variance"}), the energy score (\code{"energy_score"}), the
+#' fraction of threshold exceedances (\code{"FTE"}), the variogram (\code{"variogram"}),
+#' and the isotropy of the variogram (\code{"isotropy"}). See references for details.
 #'
-#' If \code{prerank} is a function, it should convert a vector of dimension d, to
+#' If \code{prerank} is a function, it should convert a matrix of dimension (d1, d2), to
 #' a single numeric value. Checks are in place to ensure this is satisfied. The
 #' \code{prerank} function could also take additional inputs, in which case these
-#' inputs should be included as additional arguments in \code{get_prerank}.
+#' inputs should be included as additional arguments in \code{get_prerank_gr()}.
 #' See examples below.
+#'
+#' The variogram pre-rank function requires that an additional argument \code{h} is
+#' provided that specifies the multivariate lag at which to calculate the variogram.
+#' This should be a vector containing two integers. Alternatively, it can be a matrix with two
+#' columns. In this case, the variogram is calculated for each row of the given matrix
+#' and the sum of the variograms is returned.
+#'
+#' The isotropy pre-rank function requires that a single integer \code{h} is provided,
+#' denoting the lag at which the variograms are compared. The FTE pre-rank requires
+#' a threshold parameter \code{t}, which must be a single real value.
 #'
 #' @examples
 #' d1 <- 5

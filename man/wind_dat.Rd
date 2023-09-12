@@ -5,7 +5,7 @@
 \alias{wind_dat}
 \title{Gridded wind speed data}
 \format{
-A list with 6 elements:
+An object of type list containing 6 elements:
 \describe{
   \item{obs}{Matrix of dimension (1045, 1056) containing the observed
   wind speed for each date and grid point.}
