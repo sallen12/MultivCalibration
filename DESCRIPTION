@@ -9,12 +9,13 @@ Description: An R package that provides tools to evaluate the calibration of
     objects, to which univariate checks for calibration can be employed.
 License: GPL (>= 2)
 Encoding: UTF-8
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 Suggests: 
     geoR,
     ggplot2,
     knitr,
     MASS,
+    gridExtra,
     rmarkdown
 VignetteBuilder: knitr
 LinkingTo: 

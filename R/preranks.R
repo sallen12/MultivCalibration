@@ -127,6 +127,7 @@
 #' barplot(table(mvranks))
 #'
 #' @name preranks
+#' @importFrom stats var
 NULL
 
 

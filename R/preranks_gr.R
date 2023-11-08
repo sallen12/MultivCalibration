@@ -61,7 +61,8 @@
 #' x <- array(rnorm(d1*d2*M), c(d1, d2, M))
 #'
 #' get_prerank_gr(y, x, prerank = "average_rank", return_rank = FALSE)
-#' get_prerank(as.vector(y), matrix(x, nrow = d1*d2, ncol = M), prerank = "average_rank", return_rank = FALSE)
+#' get_prerank(as.vector(y), matrix(x, nrow = d1*d2, ncol = M),
+#'             prerank = "average_rank", return_rank = FALSE)
 #'
 #' get_prerank_gr(y, x, prerank = "variance", return_rank = FALSE)
 #' get_prerank_gr(y, x, prerank = "variance")
