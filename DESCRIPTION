@@ -16,7 +16,10 @@ Suggests:
     knitr,
     MASS,
     gridExtra,
-    rmarkdown
+    abind,
+    scales,
+    epit
+Remotes: AlexanderHenzi/epit
 VignetteBuilder: knitr
 LinkingTo: 
     Rcpp,
