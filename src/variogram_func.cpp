@@ -5,6 +5,35 @@
 #include <math.h>
 using namespace Rcpp;
 
+//' Compute empirical variogram
+//'
+//' @param y vector or matrix of values from which to calculate the variogram
+//' @param w_mat matrix of weights corresponding to the pairs of dimensions
+//' @param h the spatial lag at which to calculate the empirical variogram
+//' @param p exponent used when calculating the variogram
+//'
+//' @details
+//' \code{vario()} takes a vector \code{y} of length $d$ and a matrix \code{w_mat}
+//' of dimension $d \times d$. The elements of \code{w_mat} are weights, and must
+//' therefore be non-negative.
+//'
+//' This calculates the double sum from $i = 1, \dots, d$ and $j = 1, \dots, d$
+//' of the weighted difference between the components of \code{y}.
+//'
+//' \code{vario_mat()} takes a matrix \code{y} of dimension $p \times q$ and a vector
+//' \code{h} of length 2. \code{h} represents the spatial lag at which the spatial
+//' variogam will be calculated.
+//'
+//' In both cases, \code{p} is a single positive number that represents the exponent
+//' used when calculating the variogram. This is typically set equal to 2.
+//'
+//' @return
+//' The variogram
+//'
+//' @name variogram_func
+//' @importFrom Rcpp evalCpp
+
+//' @rdname variogram_func
 // [[Rcpp::export]]
 double vario(arma::colvec y, arma::mat w_mat, double p){
 
@@ -19,6 +48,8 @@ double vario(arma::colvec y, arma::mat w_mat, double p){
   return (out);
 }
 
+
+//' @rdname variogram_func
 // [[Rcpp::export]]
 double vario_mat(arma::mat y, arma::ivec h, double p){
 
