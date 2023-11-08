@@ -23,7 +23,7 @@
 
 %\VignetteEngine{knitr::knitr}
 %\VignetteIndexEntry{main}
-%\VignetteDepends{MultivCalibration,ggplot2,}
+%\VignetteDepends{MultivCalibration,ggplot2}
 %\VignetteKeywords{comparative evaluation, ensemble forecasts, out-of-sample evaluation, predictive distributions, proper scoring rules, score calculation, R}
 %\VignettePackage{MultivCalibration}
 %\VignetteEncoding{UTF-8}
@@ -377,9 +377,9 @@ This can be repeated for all pre-rank functions, and for different types of erro
 
 <<plot_histograms_1_gE, echo=FALSE, fig.show='hide'>>=
 pr_names <- c("Multivariate", "Average rank", "Band-depth",
-              "Energy score", "Location", "Scale", "Dependence")
+              "Energy score", "Mean", "Variance", "Dependence")
 plot_list <- lapply(seq_along(pr_names), function(i) {
-  pit_hist(rank_df[[i]], ylab = pr_names[i], ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+  pit_hist(rank_df[[i]], ylab = pr_names[i], ymax = 0.28, xlab = NULL, xticks = F, yticks = F)
 })
 plot_list[["ncol"]] <- 1
 plot_mean1 <- do.call(grid.arrange, plot_list)
@@ -403,7 +403,7 @@ rank_df <- sapply(1:n, function(i) {
 })
 rank_df <- data.frame(t(rank_df))
 
-plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.28, xlab = NULL, xticks = F, yticks = F)
 plot_list[["ncol"]] <- 1
 plot_mean2 <- do.call(grid.arrange, plot_list)
 @
@@ -431,7 +431,7 @@ rank_df <- sapply(1:n, function(i) {
 })
 rank_df <- data.frame(t(rank_df))
 
-plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.28, xlab = NULL, xticks = F, yticks = F)
 plot_list[["ncol"]] <- 1
 plot_sc1 <- do.call(grid.arrange, plot_list)
 @
@@ -439,7 +439,7 @@ plot_sc1 <- do.call(grid.arrange, plot_list)
 This can similarly be repeated using \code{sig2_x = 1.25} to analyse over-dispersion in the multivariate forecast distributions.
 
 <<sim_study_mvn_rankdf_4, echo=FALSE, fig.show='hide'>>=
-sig2_x <- 1.35
+sig2_x <- 1.25
 Sig_x <- Sig_y*sig2_x
 x <- replicate(M, mvrnorm(n, mu = mu_y, Sigma = Sig_x))
 
@@ -457,7 +457,7 @@ rank_df <- sapply(1:n, function(i) {
 })
 rank_df <- data.frame(t(rank_df))
 
-plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.28, xlab = NULL, xticks = F, yticks = F)
 plot_list[["ncol"]] <- 1
 plot_sc2 <- do.call(grid.arrange, plot_list)
 @
@@ -485,7 +485,7 @@ rank_df <- sapply(1:n, function(i) {
 })
 rank_df <- data.frame(t(rank_df))
 
-plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.28, xlab = NULL, xticks = F, yticks = F)
 plot_list[["ncol"]] <- 1
 plot_corr1 <- do.call(grid.arrange, plot_list)
 @
@@ -493,7 +493,7 @@ plot_corr1 <- do.call(grid.arrange, plot_list)
 This is also repeated using $\tau = 1.5$, as an example of when the dependence is too strong.
 
 <<sim_study_mvn_rankdf_6, echo=FALSE, fig.show='hide'>>=
-tau_x <- 5
+tau_x <- 2
 Sig_x <- outer(1:d, 1:d, function(i, j) sig2*exp(-abs(i - j)/tau_x))
 x <- replicate(M, mvrnorm(n, mu = mu_y, Sigma = Sig_x))
 
@@ -511,7 +511,7 @@ rank_df <- sapply(1:n, function(i) {
 })
 rank_df <- data.frame(t(rank_df))
 
-plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.4, xlab = NULL, xticks = F, yticks = F)
+plot_list <- lapply(rank_df, pit_hist, ylab = "", ymax = 0.28, xlab = NULL, xticks = F, yticks = F)
 plot_list[["ncol"]] <- 1
 plot_corr2 <- do.call(grid.arrange, plot_list)
 @
@@ -803,12 +803,14 @@ get_univ_ranks <- function(y, ens) {
 }
 
 univ_ranks <- get_univ_ranks(obs, fc_ifs)
-plot_ifs <-
-  pit_hist(as.vector(univ_ranks), ymax = 0.31, title = "IFS ensemble")
+plot_ifs <- pit_hist(as.vector(univ_ranks),
+                     ymax = 0.31, title = "IFS ensemble",
+                     xticks = F, yticks = F, xlab = NULL, ylab = NULL)
 
 univ_ranks_pp <- get_univ_ranks(obs, fc_ecc)
-plot_pp <-
-  pit_hist(as.vector(univ_ranks_pp), ymax = 0.31, title = "Post-processed")
+plot_pp <- pit_hist(as.vector(univ_ranks_pp),
+                    ymax = 0.31, title = "Post-processed",
+                    xticks = F, yticks = F, xlab = NULL, ylab = NULL)
 @
 
 \begin{figure}
