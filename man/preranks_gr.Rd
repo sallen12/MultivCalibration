@@ -40,21 +40,33 @@ the band-depth rank (\code{"band_depth"}), the mean (\code{"mean"}), the varianc
 fraction of threshold exceedances (\code{"FTE"}), the variogram (\code{"variogram"}),
 and the isotropy of the variogram (\code{"isotropy"}). See references for details.
 
-If \code{prerank} is a function, it should convert a matrix of dimension (d1, d2), to
+If \code{prerank} is a function, it should convert a matrix to
 a single numeric value. Checks are in place to ensure this is satisfied. The
 \code{prerank} function could also take additional inputs, in which case these
 inputs should be included as additional arguments in \code{get_prerank_gr()}.
 See examples below.
 
-The variogram pre-rank function requires that an additional argument \code{h} is
-provided that specifies the multivariate lag at which to calculate the variogram.
-This should be a vector containing two integers. Alternatively, it can be a matrix with two
-columns. In this case, the variogram is calculated for each row of the given matrix
+The FTE pre-rank requires a threshold parameter \code{t}, which must be a single real value.
+The isotropy pre-rank function requires that a single integer \code{h} is provided,
+denoting the lag at which the variograms are compared.
+
+The variogram pre-rank function requires either an additional argument \code{h}
+that specifies the multivariate lag at which to calculate the variogram, or an argument
+\code{w} which is an array of non-negative weights assigned to the different pairs of
+dimensions. The lag \code{h} should be a vector containing two integers, or a matrix with two
+columns, in which case the variogram is calculated for each row of the given matrix
 and the sum of the variograms is returned.
 
-The isotropy pre-rank function requires that a single integer \code{h} is provided,
-denoting the lag at which the variograms are compared. The FTE pre-rank requires
-a threshold parameter \code{t}, which must be a single real value.
+Assuming \code{y} is a matrix of dimension (d1, d2), the weight matrix \code{w} must be
+an array with dimensions (d1, d2, d1, d2). The element in the (i, j, k, l) entry contains
+the weight between the grid point (i, j) and the grid point (k, l). If both \code{h}
+and \code{w} are provided, then only \code{h} will be used.
+
+The variogram and isotropy pre-rank functions additionally require an argument \code{p} specifying
+the exponent to be used in the variogram. The variogram also takes an input \code{std}
+specifying whether the variogram should be standardised by the variance across the dimensions.
+The exponent \code{p} is a positive real number, whereas \code{std} is a logical.
+The default is \code{p = 2} and \code{std = TRUE}.
 }
 \examples{
 d1 <- 5
@@ -63,6 +75,15 @@ M <- 10
 
 y <- matrix(rnorm(d1*d2), nrow = d1, ncol = d2)
 x <- array(rnorm(d1*d2*M), c(d1, d2, M))
+
+# create array with weights that are inversely proportional to the distance
+w <- array(NA, c(d1, d2, d1, d2))
+for (i in 1:d1) {
+  for (j in 1:d2) {
+    w[i, j, , ] <- outer(1:d1, 1:d2, FUN = function(k, l) 1 / sqrt((i - k)^2 + (j - l)^2))
+  }
+}
+w[is.infinite(w)] <- 0
 
 get_prerank_gr(y, x, prerank = "average_rank", return_rank = FALSE)
 get_prerank(as.vector(y), matrix(x, nrow = d1*d2, ncol = M),
@@ -75,6 +96,7 @@ get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), return_rank = FALSE)
 get_prerank_gr(y, x, prerank = "variogram", h = c(0, -1), return_rank = FALSE)
 get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), std = FALSE, return_rank = FALSE)
 get_prerank_gr(y, x, prerank = "variogram", h = rbind(c(0, 1), c(1, 0)))
+get_prerank_gr(y, x, prerank = "variogram", w = w)
 
 get_prerank_gr(y, x, prerank = "isotropy", return_rank = FALSE)
 get_prerank_gr(y, x, prerank = "isotropy")
@@ -87,6 +109,9 @@ Allen, S., Ziegel, J. and D. Ginsbourger (2023):
 `Assessing the calibration of multivariate probabilistic forecasts'.
 \emph{arXiv preprint}. arXiv:2307.05846.
 \doi{10.48550/arXiv.2307.05846}
+}
+\seealso{
+\link{preranks} for pre-rank functions for multivariate forecasts
 }
 \author{
 Sam Allen

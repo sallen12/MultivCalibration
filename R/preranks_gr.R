@@ -24,6 +24,8 @@
 #'
 #' @author Sam Allen
 #'
+#' @seealso \link{preranks} for pre-rank functions for multivariate forecasts
+#'
 #' @details
 #' The argument \code{prerank} specifies which pre-rank function to use. This can
 #' either be a string corresponding to one of several in-built options, or it can
@@ -36,21 +38,33 @@
 #' fraction of threshold exceedances (\code{"FTE"}), the variogram (\code{"variogram"}),
 #' and the isotropy of the variogram (\code{"isotropy"}). See references for details.
 #'
-#' If \code{prerank} is a function, it should convert a matrix of dimension (d1, d2), to
+#' If \code{prerank} is a function, it should convert a matrix to
 #' a single numeric value. Checks are in place to ensure this is satisfied. The
 #' \code{prerank} function could also take additional inputs, in which case these
 #' inputs should be included as additional arguments in \code{get_prerank_gr()}.
 #' See examples below.
 #'
-#' The variogram pre-rank function requires that an additional argument \code{h} is
-#' provided that specifies the multivariate lag at which to calculate the variogram.
-#' This should be a vector containing two integers. Alternatively, it can be a matrix with two
-#' columns. In this case, the variogram is calculated for each row of the given matrix
+#' The FTE pre-rank requires a threshold parameter \code{t}, which must be a single real value.
+#' The isotropy pre-rank function requires that a single integer \code{h} is provided,
+#' denoting the lag at which the variograms are compared.
+#'
+#' The variogram pre-rank function requires either an additional argument \code{h}
+#' that specifies the multivariate lag at which to calculate the variogram, or an argument
+#' \code{w} which is an array of non-negative weights assigned to the different pairs of
+#' dimensions. The lag \code{h} should be a vector containing two integers, or a matrix with two
+#' columns, in which case the variogram is calculated for each row of the given matrix
 #' and the sum of the variograms is returned.
 #'
-#' The isotropy pre-rank function requires that a single integer \code{h} is provided,
-#' denoting the lag at which the variograms are compared. The FTE pre-rank requires
-#' a threshold parameter \code{t}, which must be a single real value.
+#' Assuming \code{y} is a matrix of dimension (d1, d2), the weight matrix \code{w} must be
+#' an array with dimensions (d1, d2, d1, d2). The element in the (i, j, k, l) entry contains
+#' the weight between the grid point (i, j) and the grid point (k, l). If both \code{h}
+#' and \code{w} are provided, then only \code{h} will be used.
+#'
+#' The variogram and isotropy pre-rank functions additionally require an argument \code{p} specifying
+#' the exponent to be used in the variogram. The variogram also takes an input \code{std}
+#' specifying whether the variogram should be standardised by the variance across the dimensions.
+#' The exponent \code{p} is a positive real number, whereas \code{std} is a logical.
+#' The default is \code{p = 2} and \code{std = TRUE}.
 #'
 #' @examples
 #' d1 <- 5
@@ -59,6 +73,15 @@
 #'
 #' y <- matrix(rnorm(d1*d2), nrow = d1, ncol = d2)
 #' x <- array(rnorm(d1*d2*M), c(d1, d2, M))
+#'
+#' # create array with weights that are inversely proportional to the distance
+#' w <- array(NA, c(d1, d2, d1, d2))
+#' for (i in 1:d1) {
+#'   for (j in 1:d2) {
+#'     w[i, j, , ] <- outer(1:d1, 1:d2, FUN = function(k, l) 1 / sqrt((i - k)^2 + (j - l)^2))
+#'   }
+#' }
+#' w[is.infinite(w)] <- 0
 #'
 #' get_prerank_gr(y, x, prerank = "average_rank", return_rank = FALSE)
 #' get_prerank(as.vector(y), matrix(x, nrow = d1*d2, ncol = M),
@@ -71,6 +94,7 @@
 #' get_prerank_gr(y, x, prerank = "variogram", h = c(0, -1), return_rank = FALSE)
 #' get_prerank_gr(y, x, prerank = "variogram", h = c(0, 1), std = FALSE, return_rank = FALSE)
 #' get_prerank_gr(y, x, prerank = "variogram", h = rbind(c(0, 1), c(1, 0)))
+#' get_prerank_gr(y, x, prerank = "variogram", w = w)
 #'
 #' get_prerank_gr(y, x, prerank = "isotropy", return_rank = FALSE)
 #' get_prerank_gr(y, x, prerank = "isotropy")
@@ -115,25 +139,38 @@ get_prerank_gr <- function(y, x, prerank, return_rank = TRUE, ...) {
   } else if (prerank == "FTE") {
     fte_rank(y, x, return_rank, t = varargs$t)
   } else if (prerank == "variogram") {
-    vg_rank_mat(y, x, return_rank, h = varargs$h, p = varargs$p, std = varargs$std)
+    vg_rank_mat(y, x, return_rank, h = varargs$h, w = varargs$w, p = varargs$p, std = varargs$std)
   } else if (prerank == "isotropy") {
     iso_rank(y, x, return_rank, h = varargs$h, p = varargs$p)
   }
 }
 
 # variogram
-vg_rank_mat <- function(y, x, h, p, std, return_rank = TRUE) {
-  custom_rank_gr(y, x, prerank = vario_func_mat, return_rank, h = h, p = p, std = std)
+vg_rank_mat <- function(y, x, h = NULL, w = NULL, p = 2, std = TRUE, return_rank = TRUE) {
+  if (is.null(h)) {
+    custom_rank_gr(y, x, prerank = vario_func_mat_w, return_rank, w = w, p = p, std = std)
+  } else {
+    custom_rank_gr(y, x, prerank = vario_func_mat_h, return_rank, h = h, p = p, std = std)
+  }
 }
 
-# variogram helper function
-vario_func_mat <- function(x, h, p, std) {
+# variogram helper function - lag
+vario_func_mat_h <- function(x, h, p, std) {
   if (is.matrix(h)) {
     g_x <- -sum(apply(h, 1, vario_mat, y = x, p = p))
   } else {
     g_x <- -vario_mat(x, h, p)
   }
   if (std) g_x <- g_x/var(as.vector(x))
+  return(g_x)
+}
+
+# variogram helper function - weight matrix
+vario_func_mat_w <- function(x, w, p, std) {
+  x <- as.vector(x)
+  w <- matrix(w, nrow = length(x), ncol = length(x))
+  g_x <- -vario(x, w, p)
+  if (std) g_x <- g_x/var(x)
   return(g_x)
 }
 
@@ -201,13 +238,27 @@ check_inputs_gr <- function (y, x, prerank, return_rank, ...) {
       if (!is.numeric(varargs$t)) stop("'t' is not numeric")
       if (length(varargs$t) > 1) stop("'t' must be a single numeric value")
     } else if (prerank == "variogram") {
-      if (is.null(varargs$h)) stop("The variogram pre-rank function requires an additional argument 'h'")
-      if (!is.numeric(varargs$h)) stop("'h' is not numeric")
-      if (!is.vector(varargs$h) && !is.matrix(varargs$h)) stop("'h' must be either a vector or a matrix")
-      if (is.vector(varargs$h)) {
-        if (length(varargs$h) != 2) stop("'h' must be a vector of length 2")
-      } else if (is.matrix(varargs$h)) {
-        if (dim(varargs$h)[2] != 2) stop("'h' must be a matrix with 2 columns")
+      if (is.null(varargs$h) && is.null(varargs$w)) stop("The variogram pre-rank function requires an additional argument 'h' or 'w'")
+
+      if (!is.null(varargs$h)) {
+        if (!is.numeric(varargs$h)) stop("'h' is not numeric")
+        if (!is.vector(varargs$h) && !is.matrix(varargs$h)) stop("'h' must be either a vector or a matrix")
+        if (is.vector(varargs$h)) {
+          if (length(varargs$h) != 2) stop("'h' must be a vector of length 2")
+        } else if (is.matrix(varargs$h)) {
+          if (dim(varargs$h)[2] != 2) stop("If 'h' is a matrix, it must have 2 columns")
+        }
+      }
+
+      if (!is.null(varargs$w)) {
+        if (!is.array(varargs$w)) stop("'w' is not an array")
+        if (!is.numeric(varargs$w)) stop("'w' must be a numeric")
+        if (any(varargs$w < 0)) stop("The weight matrix 'w' contans negative entries")
+        if (length(dim(varargs$w)) != 4) stop("'w' must be an array with four dimensions")
+        if ((dim(varargs$w)[1] != nrow(y)) || dim(varargs$w)[3] != nrow(y))
+          stop("The 1st and 3rd dimensions of 'w' should match the number of rows in 'y'")
+        if ((dim(varargs$w)[2] != ncol(y)) || dim(varargs$w)[4] != ncol(y))
+          stop("The 2nd and 4th dimensions of 'w' should match the number of columns in 'y'")
       }
 
       if (!is.null(varargs$p)) {
