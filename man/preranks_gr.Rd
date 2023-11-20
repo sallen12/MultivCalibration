@@ -101,7 +101,6 @@ get_prerank_gr(y, x, prerank = "variogram", w = w)
 get_prerank_gr(y, x, prerank = "isotropy", return_rank = FALSE)
 get_prerank_gr(y, x, prerank = "isotropy")
 get_prerank_gr(y, x, prerank = "isotropy", h = 2)
-get_prerank_gr(y, x, prerank = "isotropy", h = c(1, 2))
 
 }
 \references{

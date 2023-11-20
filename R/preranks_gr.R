@@ -99,7 +99,6 @@
 #' get_prerank_gr(y, x, prerank = "isotropy", return_rank = FALSE)
 #' get_prerank_gr(y, x, prerank = "isotropy")
 #' get_prerank_gr(y, x, prerank = "isotropy", h = 2)
-#' get_prerank_gr(y, x, prerank = "isotropy", h = c(1, 2))
 #'
 #' @name preranks_gr
 NULL
@@ -187,9 +186,11 @@ iso_func <- function(x, h, p) {
   } else {
     h <- h*rbind(c(0, 1), c(1, 0), c(1, 1), c(-1, 1))
     g_x_vec <- apply(h, 1, vario_mat, y = x, p = p)
-    g_x <- ((g_x_vec[1] - g_x_vec[2])/(g_x_vec[1] + g_x_vec[2]))^2 +
-      ((g_x_vec[3] - g_x_vec[4])/(g_x_vec[3] + g_x_vec[4]))^2
-    g_x <- -g_x
+    w_hv <- 1/(2*(g_x_vec[1]^2)/(nrow(x)*(ncol(x) - h)) + 2*(g_x_vec[2]^2)/(ncol(x)*(nrow(x) - h)))
+    w_di <- 1/(2*(g_x_vec[3]^2 + g_x_vec[4]^2)/((ncol(x) - h)*(nrow(x) - h)))
+    g_x_hv <- w_hv*(g_x_vec[1] - g_x_vec[2])^2
+    g_x_di <- w_di*(g_x_vec[3] - g_x_vec[4])^2
+    g_x <- -max(g_x_hv, g_x_di)
   }
   return(g_x)
 }
