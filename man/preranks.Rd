@@ -29,11 +29,11 @@ and sample members (if \code{return_rank = F}).
 Calculate pre-ranks of multivariate forecasts and observations
 }
 \details{
-When assessing multivariate calibration, it is common to convert the multivariate
-forecasts and observations into univariate objects, and then apply univariate
-methods. In the context of multivariate calibration, the function used to
-perform this transformation is often called a pre-rank function. The function
-\code{get_prerank()} can be used to apply this transformation, and
+When assessing the calibration of multivariate probabilistic forecasts, it is
+common to convert the multivariate forecasts and observations into univariate objects,
+and then apply univariate methods. In the context of multivariate calibration, the
+function used to perform this transformation is often called a pre-rank function.
+The function \code{get_prerank()} can be used to apply this transformation, and
 to extract the rank of the transformed observation among the transformed
 samples from the forecast (i.e. ensemble members).
 
@@ -48,19 +48,30 @@ the band-depth rank (\code{"band_depth"}), the mean (\code{"mean"}), the varianc
 fraction of threshold exceedances (\code{"FTE"}), and the variogram
 (\code{"variogram"}). See references for details.
 
-If \code{prerank} is a function, it should convert a vector of dimension d, to
+If \code{prerank} is a function, it should convert a vector of length d, to
 a single numeric value. Checks are in place to ensure this is satisfied. The
 \code{prerank} function could also take additional inputs, in which case these
 inputs should be included as additional arguments in \code{get_prerank()}.
 See examples below.
 
-The variogram pre-rank function requires that an additional argument \code{h} is
-provided that specifies the lag at which to calculate the variogram.
-This should be a single positive integer. Alternatively, it can be a vector containing
-multiple positive integers. In this case, the variogram is calculated for each
-lag in the vector and the sum of the variograms is returned.
-
 The FTE pre-rank requires a threshold parameter \code{t}, which must be a single real value.
+
+The variogram pre-rank function requires either an additional argument \code{h}
+that specifies the lag at which to calculate the variogram, or an argument
+\code{w} which is a matrix of non-negative weights assigned to the different pairs of
+dimensions. The lag \code{h} should be a single positive integer, while the
+weight matrix \code{w} must be a symmetric numeric matrix with d rows and d columns.
+The lag \code{h} can also be a vector containing multiple positive integers,
+in which case the variogram is calculated for each lag in the vector and the sum of
+these variogram values is returned. If neither of these additional arguments are provided,
+then the defaultbehaviour is to set \code{h = 1}. If both are provided, then
+only \code{h} will be used.
+
+The variogram pre-rank function additionally requires an argument \code{p} specifying
+the exponent to be used in the variogram, and \code{std} specifying whether the variogram
+should be standardised by the variance across the dimensions. The exponent \code{p} is
+a positive real number, whereas \code{std} is a logical. The default is \code{p = 2} and
+\code{std = TRUE}.
 }
 \examples{
 d <- 5
@@ -70,6 +81,8 @@ library(MASS)
 
 y <- as.vector(mvrnorm(1, rep(0, d), diag(d)))
 x <- t(mvrnorm(M, rep(0, d), diag(d)))
+
+w <- 1/abs(outer(1:d, 1:d, "-")); diag(w) <- 0
 
 get_prerank(y, x, prerank = "average_rank", return_rank = FALSE)
 get_prerank(y, x, prerank = "average_rank")
@@ -81,6 +94,11 @@ get_prerank(y, x, prerank = "FTE", t = 0.5, return_rank = FALSE)
 get_prerank(y, x, prerank = "FTE", t = 0.5) # ties are resolved at random
 get_prerank(y, x, prerank = "FTE", t = -0.5)
 
+get_prerank(y, x, prerank = "variogram", return_rank = FALSE)
+get_prerank(y, x, prerank = "variogram", h = 1, return_rank = FALSE)
+get_prerank(y, x, prerank = "variogram", h = 1, p = 1, return_rank = FALSE)
+get_prerank(y, x, prerank = "variogram", h = 1, std = FALSE, return_rank = FALSE)
+get_prerank(y, x, prerank = "variogram", w = w, return_rank = FALSE)
 
 ### use sapply to apply to several forecast cases
 n <- 1000

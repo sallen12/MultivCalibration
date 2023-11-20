@@ -40,11 +40,11 @@
 #' @author Sam Allen
 #'
 #' @details
-#' When assessing multivariate calibration, it is common to convert the multivariate
-#' forecasts and observations into univariate objects, and then apply univariate
-#' methods. In the context of multivariate calibration, the function used to
-#' perform this transformation is often called a pre-rank function. The function
-#' \code{get_prerank()} can be used to apply this transformation, and
+#' When assessing the calibration of multivariate probabilistic forecasts, it is
+#' common to convert the multivariate forecasts and observations into univariate objects,
+#' and then apply univariate methods. In the context of multivariate calibration, the
+#' function used to perform this transformation is often called a pre-rank function.
+#' The function \code{get_prerank()} can be used to apply this transformation, and
 #' to extract the rank of the transformed observation among the transformed
 #' samples from the forecast (i.e. ensemble members).
 #'
@@ -59,19 +59,31 @@
 #' fraction of threshold exceedances (\code{"FTE"}), and the variogram
 #' (\code{"variogram"}). See references for details.
 #'
-#' If \code{prerank} is a function, it should convert a vector of dimension d, to
+#' If \code{prerank} is a function, it should convert a vector of length d, to
 #' a single numeric value. Checks are in place to ensure this is satisfied. The
 #' \code{prerank} function could also take additional inputs, in which case these
 #' inputs should be included as additional arguments in \code{get_prerank()}.
 #' See examples below.
 #'
-#' The variogram pre-rank function requires that an additional argument \code{h} is
-#' provided that specifies the lag at which to calculate the variogram.
-#' This should be a single positive integer. Alternatively, it can be a vector containing
-#' multiple positive integers. In this case, the variogram is calculated for each
-#' lag in the vector and the sum of the variograms is returned.
-#'
 #' The FTE pre-rank requires a threshold parameter \code{t}, which must be a single real value.
+#'
+#' The variogram pre-rank function requires either an additional argument \code{h}
+#' that specifies the lag at which to calculate the variogram, or an argument
+#' \code{w} which is a matrix of non-negative weights assigned to the different pairs of
+#' dimensions. The lag \code{h} should be a single positive integer, while the
+#' weight matrix \code{w} must be a symmetric numeric matrix with d rows and d columns.
+#' The lag \code{h} can also be a vector containing multiple positive integers,
+#' in which case the variogram is calculated for each lag in the vector and the sum of
+#' these variogram values is returned. If neither of these additional arguments are provided,
+#' then the defaultbehaviour is to set \code{h = 1}. If both are provided, then
+#' only \code{h} will be used.
+#'
+#' The variogram pre-rank function additionally requires an argument \code{p} specifying
+#' the exponent to be used in the variogram, and \code{std} specifying whether the variogram
+#' should be standardised by the variance across the dimensions. The exponent \code{p} is
+#' a positive real number, whereas \code{std} is a logical. The default is \code{p = 2} and
+#' \code{std = TRUE}.
+#'
 #'
 #' @examples
 #' d <- 5
@@ -81,6 +93,8 @@
 #'
 #' y <- as.vector(mvrnorm(1, rep(0, d), diag(d)))
 #' x <- t(mvrnorm(M, rep(0, d), diag(d)))
+#'
+#' w <- 1/abs(outer(1:d, 1:d, "-")); diag(w) <- 0
 #'
 #' get_prerank(y, x, prerank = "average_rank", return_rank = FALSE)
 #' get_prerank(y, x, prerank = "average_rank")
@@ -92,6 +106,11 @@
 #' get_prerank(y, x, prerank = "FTE", t = 0.5) # ties are resolved at random
 #' get_prerank(y, x, prerank = "FTE", t = -0.5)
 #'
+#' get_prerank(y, x, prerank = "variogram", return_rank = FALSE)
+#' get_prerank(y, x, prerank = "variogram", h = 1, return_rank = FALSE)
+#' get_prerank(y, x, prerank = "variogram", h = 1, p = 1, return_rank = FALSE)
+#' get_prerank(y, x, prerank = "variogram", h = 1, std = FALSE, return_rank = FALSE)
+#' get_prerank(y, x, prerank = "variogram", w = w, return_rank = FALSE)
 #'
 #' ### use sapply to apply to several forecast cases
 #' n <- 1000
@@ -138,7 +157,7 @@ get_prerank <- function(y, x, prerank, return_rank = TRUE, ...) {
   varargs <- list(...)
   if (!is.function(prerank)) {
     if (prerank == "variogram") {
-      if (is.null(varargs$h)) varargs$h <- 1
+      if (is.null(varargs$h) && is.null(varargs$w)) varargs$h <- 1
       if (is.null(varargs$p)) varargs$p <- 2
       if (is.null(varargs$std)) varargs$std <- TRUE
     }
@@ -160,7 +179,7 @@ get_prerank <- function(y, x, prerank, return_rank = TRUE, ...) {
   } else if (prerank == "FTE") {
     fte_rank(y, x, return_rank, t = varargs$t)
   } else if (prerank == "variogram") {
-    vg_rank(y, x, return_rank, h = varargs$h, p = varargs$p, std = varargs$std)
+    vg_rank(y, x, return_rank, h = varargs$h, w = varargs$w, p = varargs$p, std = varargs$std)
   }
 }
 
@@ -230,12 +249,16 @@ fte_rank <- function(y, x, t, return_rank = TRUE) {
 }
 
 # variogram
-vg_rank <- function(y, x, h, p, std, return_rank = TRUE) {
-  custom_rank(y, x, prerank = vario_func, return_rank, h = h, p = p, std = std)
+vg_rank <- function(y, x, h = NULL, w = NULL, p = 2, std = TRUE, return_rank = TRUE) {
+  if (is.null(h)) {
+    custom_rank(y, x, prerank = vario_func_w, return_rank, w = w, p = p, std = std)
+  } else {
+    custom_rank(y, x, prerank = vario_func_h, return_rank, h = h, p = p, std = std)
+  }
 }
 
-# variogram helper function
-vario_func <- function(x, h, p, std) {
+# variogram helper function - lag
+vario_func_h <- function(x, h, p, std) {
   d <- length(x)
   if (length(h) > 1) {
     g_x <- sapply(h, function(hh) {
@@ -247,6 +270,13 @@ vario_func <- function(x, h, p, std) {
     w <- matrix(as.numeric(abs(outer(1:d, 1:d, FUN = "-")) == h), nrow = d)
     g_x <- -vario(x, w, p)
   }
+  if (std) g_x <- g_x/var(x)
+  return(g_x)
+}
+
+# variogram helper function - weight function
+vario_func_w <- function(x, w, p, std) {
+  g_x <- -vario(x, w, p)
   if (std) g_x <- g_x/var(x)
   return(g_x)
 }
@@ -299,6 +329,15 @@ check_inputs <- function (y, x, prerank, return_rank, ...) {
         if (!is.numeric(varargs$h)) stop("'h' is not numeric")
         if (any(varargs$h < 0)) stop("The lag 'h' contans negative entries")
         if (any(varargs$h >= length(y))) stop("The lag 'h' exceeds the dimension of the data")
+      }
+
+      if (!is.null(varargs$w)) {
+        if (!is.matrix(varargs$w)) stop("'w' is not a matrix")
+        if (!is.numeric(varargs$w)) stop("'w' must be a numeric")
+        if (any(varargs$w < 0)) stop("The weight matrix 'w' contans negative entries")
+        if ((nrow(varargs$w) != length(y)) || (ncol(varargs$w) != length(y)))
+          stop("'w' must be a square matrix with the same rows and columns as the length of 'y'")
+        if(!isSymmetric(unname(varargs$w))) stop("'w' must be a symmetric matrix")
       }
 
       if (!is.null(varargs$p)) {
