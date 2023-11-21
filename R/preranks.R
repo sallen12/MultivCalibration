@@ -245,7 +245,7 @@ es_rank <- function(y, x, return_rank = TRUE) {
 
 # fraction of threshold exceedances
 fte_rank <- function(y, x, t, return_rank = TRUE) {
-  custom_rank(y, x, prerank = sum, return_rank, t = t)
+  custom_rank(y, x, prerank = function(z, t) mean(z > t), return_rank, t = t)
 }
 
 # variogram
@@ -286,11 +286,11 @@ custom_rank <- function(y, x, prerank, return_rank = TRUE, ...) {
   g_y <- prerank(y, ...)
   g_x <- apply(x, 2, prerank, ...)
   rho <- c(g_y, g_x)
-  names(rho) <- c("obs", sprintf("ens%d", 1:ncol(x)))
   if (return_rank) {
     rank_y <- rank(rho, ties.method = "random")[1]
     return(unname(rank_y))
   } else {
+    names(rho) <- c("obs", sprintf("ens%d", 1:ncol(x)))
     return(rho)
   }
 }
