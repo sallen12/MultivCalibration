@@ -122,7 +122,7 @@ get_prerank_gr <- function(y, x, prerank, return_rank = TRUE, ...) {
     }
   }
   if (is.function(prerank)) {
-    custom_rank(y, x, prerank, return_rank, ...)
+    custom_rank_gr(y, x, prerank, return_rank, ...)
   } else if (prerank == "multivariate_rank") {
     mv_rank(y, x, return_rank)
   } else if (prerank == "average_rank") {
@@ -200,11 +200,11 @@ custom_rank_gr <- function(y, x, prerank, return_rank = TRUE, ...) {
   g_y <- prerank(y, ...)
   g_x <- apply(x, 3, prerank, ...)
   rho <- c(g_y, g_x)
-  names(rho) <- c("obs", sprintf("ens%d", 1:dim(x)[3]))
   if (return_rank) {
     rank_y <- rank(rho, ties.method = "random")[1]
-    return(unname(rank_y))
+    return(rank_y)
   } else {
+    names(rho) <- c("obs", sprintf("ens%d", 1:dim(x)[3]))
     return(rho)
   }
 }
