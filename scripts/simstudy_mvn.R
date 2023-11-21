@@ -53,7 +53,7 @@ plot_ranks <- function(rank_df, filename = NULL, ylabs = NULL, ymax = 0.2) {
 }
 
 
-filedir <- "scripts/Figures/fig_"
+filedir <- "scripts/fig_"
 ylabs <- c("Multivariate", "Average rank", "Band-depth", "Energy score", "Mean", "Variance", "Dependence")
 
 

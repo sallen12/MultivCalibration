@@ -74,10 +74,10 @@ plot_map <- function(lons, lats, z, filename = NULL, ymin = 0, ymax = 15, title 
 }
 
 day <- sample(1:n, 1) # 1008
-plot_map(coord[, 2], coord[, 1], z = obs[day, , ], filename = "scripts/Figures/fig_3a.pdf")
-plot_map(coord[, 2], coord[, 1], z = fc_ifs[day, , , 1], filename = "scripts/Figures/fig_3b.pdf")
-plot_map(coord[, 2], coord[, 1], z = fc_ecc[day, , , 1], filename = "scripts/Figures/fig_3c.pdf")
-plot_map(coord[, 2], coord[, 1], z = fc_ss[day, , , 1], filename = "scripts/Figures/fig_3d.pdf")
+plot_map(coord[, 2], coord[, 1], z = obs[day, , ], filename = "scripts/fig_3a.pdf")
+plot_map(coord[, 2], coord[, 1], z = fc_ifs[day, , , 1], filename = "scripts/fig_3b.pdf")
+plot_map(coord[, 2], coord[, 1], z = fc_ecc[day, , , 1], filename = "scripts/fig_3c.pdf")
+plot_map(coord[, 2], coord[, 1], z = fc_ss[day, , , 1], filename = "scripts/fig_3d.pdf")
 
 
 ################################################################################
@@ -95,9 +95,9 @@ univ_ranks_ifs <- sapply(1:n, function(i) get_univ_ranks(obs[i, , ], fc_ifs[i, ,
 univ_ranks_ecc <- sapply(1:n, function(i) get_univ_ranks(obs[i, , ], fc_ecc[i, , , ]))
 
 pit_hist(as.vector(univ_ranks_ifs), ymax = 0.31, xlab = NULL, ylab = NULL, xticks = F, yticks = F)
-ggsave("scripts/Figures/fig_4a.pdf", width = 3, height = 2.5)
+ggsave("scripts/fig_4a.pdf", width = 3, height = 2.5)
 pit_hist(as.vector(univ_ranks_ecc), ymax = 0.31, xlab = NULL, ylab = NULL, xticks = F, yticks = F)
-ggsave("scripts/Figures/fig_4b.pdf", width = 3, height = 2.5)
+ggsave("scripts/fig_4b.pdf", width = 3, height = 2.5)
 
 
 ##### multivariate calibration
@@ -162,7 +162,7 @@ plot_ranks <- function(rank_df, filename = NULL, ylabs = NULL, ymax = 0.31) {
 }
 
 
-filedir <- "scripts/Figures/fig_"
+filedir <- "scripts/fig_"
 ylabs <- c("Average rank", "Band-depth", "Mean", "Variance", "Dependence", "FTE", "Isotropy")
 
 
@@ -220,9 +220,9 @@ plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL)
   return(plt_prerank)
 }
 
-plot_evals(rank_df_ifs$bdr, rank_df_ecc$bdr, rank_df_ss$bdr, filename = "scripts/Figures/fig_6a.pdf")
-plot_evals(rank_df_ifs$var, rank_df_ecc$var, rank_df_ss$var, filename = "scripts/Figures/fig_6b.pdf")
-plot_evals(rank_df_ifs$dep, rank_df_ecc$dep, rank_df_ss$dep, filename = "scripts/Figures/fig_6c.pdf")
+plot_evals(rank_df_ifs$bdr, rank_df_ecc$bdr, rank_df_ss$bdr, filename = "scripts/fig_6a.pdf")
+plot_evals(rank_df_ifs$var, rank_df_ecc$var, rank_df_ss$var, filename = "scripts/fig_6b.pdf")
+plot_evals(rank_df_ifs$dep, rank_df_ecc$dep, rank_df_ss$dep, filename = "scripts/fig_6c.pdf")
 
 
 ##### spearman's rank correlation coefficient

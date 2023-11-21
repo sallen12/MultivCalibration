@@ -101,7 +101,7 @@ plot_ranks <- function(rank_df, filename = NULL, ylabs = NULL, ymax = 0.2) {
 }
 
 
-filedir <- "scripts/Figures/fig_"
+filedir <- "scripts/fig_"
 ylabs <- c("Average rank", "Band-depth", "Mean", "Variance", "Dependence", "FTE", "Isotropy")
 
 
