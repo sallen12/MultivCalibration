@@ -5,7 +5,8 @@ set.seed(1000)
 
 ##### set up
 
-# devtools::install_github("sallen12/WeightedForecastVerification")
+#devtools::install_github("sallen12/MultivCalibration")
+#devtools::install_github("sallen12/WeightedForecastVerification")
 #devtools::install_github("AlexanderHenzi/epit")
 library(ggplot2)
 library(WeightedForecastVerification)
@@ -20,16 +21,10 @@ list2env(wind_dat, globalenv())
 rm(wind_dat)
 
 n <- 1045
-p <- 32
-q <- 33
+p <- 33 # number of longitudes
+q <- 32 # number of latitudes
 d <- p*q
 M <- 11
-
-# transform fields to be in the correct format
-obs <- array(obs, c(n, p, q))
-fc_ifs <- array(fc_ifs, c(n, p, q, M))
-fc_ecc <- array(fc_ecc, c(n, p, q, M))
-fc_ss <- array(fc_ss, c(n, p, q, M))
 
 # create array with weights that decrease exponentially with the distance between grid points
 w_mat <- array(NA, c(p, q, p, q))
@@ -74,10 +69,10 @@ plot_map <- function(lons, lats, z, filename = NULL, ymin = 0, ymax = 15, title 
 }
 
 day <- sample(1:n, 1) # 1008
-plot_map(coord[, 2], coord[, 1], z = obs[day, , ], filename = "scripts/fig_3a.pdf")
-plot_map(coord[, 2], coord[, 1], z = fc_ifs[day, , , 1], filename = "scripts/fig_3b.pdf")
-plot_map(coord[, 2], coord[, 1], z = fc_ecc[day, , , 1], filename = "scripts/fig_3c.pdf")
-plot_map(coord[, 2], coord[, 1], z = fc_ss[day, , , 1], filename = "scripts/fig_3d.pdf")
+plot_map(coord[, 1], coord[, 2], z = obs[day, , ], filename = "scripts/fig_3a.pdf")
+plot_map(coord[, 1], coord[, 2], z = fc_ifs[day, , , 1], filename = "scripts/fig_3b.pdf")
+plot_map(coord[, 1], coord[, 2], z = fc_ecc[day, , , 1], filename = "scripts/fig_3c.pdf")
+plot_map(coord[, 1], coord[, 2], z = fc_ss[day, , , 1], filename = "scripts/fig_3d.pdf")
 
 
 ################################################################################
@@ -189,7 +184,7 @@ get_evals <- function(r, lag, m, n0 = 1, strategy = "betabinom") {
   return(evals)
 }
 
-plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL) {
+plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL, leg_pos = NULL) {
   mv_ranks <- list()
 
   mv_evals_ifs <- get_evals(r = mv_ranks_ifs, lag = 5, m = M, n0 = 20)
@@ -208,10 +203,18 @@ plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL)
     scale_x_continuous(name = "Day",
                        breaks = seq(200, 1400, 200),
                        expand = c(0, 0)) +
-    theme_bw() +
-    theme(panel.grid = element_blank(), legend.title = element_blank(),
-          legend.justification = c(0, 1), legend.position = c(0.01, 0.99)) +
-    guides(col = guide_legend(nrow = 1))
+    theme_bw()
+
+  if (leg_pos == "right") {
+    plt_prerank <- plt_prerank + theme(panel.grid = element_blank(), legend.title = element_blank(),
+                                       legend.justification = c(1, 1), legend.position = c(0.99, 0.99)) +
+      guides(col = guide_legend(ncol = 1))
+  } else {
+    plt_prerank <- plt_prerank + theme(panel.grid = element_blank(), legend.title = element_blank(),
+                                       legend.justification = c(0, 1), legend.position = c(0.01, 0.99)) +
+      guides(col = guide_legend(nrow = 1))
+  }
+
 
   if (!is.null(filename)) {
     ggsave(filename, plt_prerank, width = 3.5, height = 3.3)
@@ -222,7 +225,7 @@ plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL)
 
 plot_evals(rank_df_ifs$bdr, rank_df_ecc$bdr, rank_df_ss$bdr, filename = "scripts/fig_6a.pdf")
 plot_evals(rank_df_ifs$var, rank_df_ecc$var, rank_df_ss$var, filename = "scripts/fig_6b.pdf")
-plot_evals(rank_df_ifs$dep, rank_df_ecc$dep, rank_df_ss$dep, filename = "scripts/fig_6c.pdf")
+plot_evals(rank_df_ifs$dep, rank_df_ecc$dep, rank_df_ss$dep, filename = "scripts/fig_6c.pdf", leg_pos = "right")
 
 
 ##### spearman's rank correlation coefficient
@@ -239,3 +242,80 @@ round(get_srcc(rank_df_ecc), 2)
 round(get_srcc(rank_df_ss), 2)
 
 
+################################################################################
+## additional analysis
+
+##### independence forecast
+
+fc_ind <- apply(fc_ecc, c(1, 2, 3), sample)
+fc_ind <- aperm(fc_ind, c(2, 3, 4, 1))
+
+rank_df_ind <- get_ranks(obs, fc_ind, w_mat, t = 6, parallel = TRUE)
+plot_ranks(rank_df_ind, ylabs = ylabs)
+
+
+##### comonotonic forecast
+
+fc_com <- apply(fc_ecc, c(1, 2, 3), sort)
+fc_com <- aperm(fc_com, c(2, 3, 4, 1))
+
+rank_df_com <- get_ranks(obs, fc_com, w_mat, t = 6, parallel = TRUE)
+plot_ranks(rank_df_com, ylabs = ylabs)
+
+
+##### standardisation
+
+### climatology
+
+standardise_fields <- function(x, mean_mat, sd_mat) {
+  x_std <- apply(x, 1, function(z) (z - mean_mat)/sd_mat, simplify = FALSE)
+  x_std <- simplify2array(x_std)
+  x_std <- aperm(x_std, c(3, 1, 2))
+  return(x_std)
+}
+
+clim_mn <- apply(obs, c(2, 3), mean)
+clim_sd <- apply(obs, c(2, 3), sd)
+
+obs_std <- standardise_fields(obs, clim_mn, clim_sd)
+fc_ifs_std <- apply(fc_ifs, 4, standardise_fields, clim_mn, clim_sd, simplify = FALSE)
+fc_ifs_std <- simplify2array(fc_ifs_std)
+
+rank_df_ifs_std <- get_ranks(obs_std, fc_ifs_std, w_mat, t = 6, parallel = TRUE)
+plot_ranks(rank_df_ifs_std, ylabs = ylabs)
+
+
+### ensemble
+
+standardise_fields <- function(x, mean_arr, sd_arr) {
+  x_std <- (x - mean_arr)/sd_arr
+  return(x_std)
+}
+
+obsifs <- abind::abind(obs, fc_ifs, along = 4)
+obsifs_mn <- apply(obsifs, c(1, 2, 3), mean)
+obsifs_sd <- apply(obsifs, c(1, 2, 3), sd)
+
+obs_std <- standardise_fields(obs, obsifs_mn, obsifs_sd)
+fc_ifs_std <- apply(fc_ifs, 4, standardise_fields, obsifs_mn, obsifs_sd, simplify = FALSE)
+fc_ifs_std <- simplify2array(fc_ifs_std)
+
+rank_df_ifs_std <- get_ranks(obs_std, fc_ifs_std, w_mat, t = 6, parallel = TRUE)
+plot_ranks(rank_df_ifs_std, filename = paste0(filedir, "7c", ".pdf"), ylabs = ylabs)
+
+
+plot_std_field <- function(obs, ens, coord, day = 886, filename = NULL, ymin, ymax) {
+
+  plt1 <- plot_map(coord[, 1], coord[, 2], z = ens[day, , , 1], ymin = ymin, ymax = ymax, title = "Ens1")
+  plt2 <- plot_map(coord[, 1], coord[, 2], z = ens[day, , , 2], ymin = ymin, ymax = ymax, title = "Ens2")
+  plt3 <- plot_map(coord[, 1], coord[, 2], z = ens[day, , , 3], ymin = ymin, ymax = ymax, title = "Ens3")
+  plto <- plot_map(coord[, 1], coord[, 2], z = obs[day, , ], ymin = ymin, ymax = ymax, title = "Obs")
+  allplot <- gridExtra::grid.arrange(plt1, plt2, plt3, plto, ncol = 1)
+
+  if (!is.null(filename)) {
+    ggsave(filename, allplot, width = 2, height = 4*2.5)
+  }
+}
+
+plot_std_field(obs, fc_ifs, coord, ymin = 0, ymax = 16, filename = paste0(filedir, "7a", ".pdf"))
+plot_std_field(obs_std, fc_ifs_std, coord, ymin = -3.1, ymax = 3.1, filename = paste0(filedir, "7b", ".pdf"))
