@@ -1,12 +1,11 @@
 Package: MultivCalibration
 Type: Package
-Title: Evaluate the calibration of multivariate probabilistic forecasts
+Title: Evaluate the Calibration of Multivariate Probabilistic Forecasts
 Version: 0.1.0
 Authors@R: person(given = "Sam", family = "Allen", email = "sam.allen@unibe.ch", role = c("cre", "aut"))
-Description: An R package that provides tools to evaluate the calibration of 
-    multivariate probabilistic forecasts. Several prerank functions are provided
-    that condense the multivariate forecasts and observations to univariate 
-    objects, to which univariate checks for calibration can be employed.
+Description: Tools to evaluate the calibration of multivariate probabilistic forecasts.
+    Several prerank functions are provided that condense the multivariate forecasts and 
+    observations to univariate objects, to which univariate checks for calibration can be employed.
 License: GPL (>= 2)
 Encoding: UTF-8
 RoxygenNote: 7.2.3
@@ -28,5 +27,4 @@ Imports:
     Rcpp,
     scoringRules
 Depends: 
-    R (>= 2.10)
-LazyData: true
+    R (>= 3.5.0)
