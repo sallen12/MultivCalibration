@@ -1,5 +1,7 @@
 # MultivCalibration
 
+[![DOI](https://zenodo.org/badge/596475593.svg)](https://zenodo.org/doi/10.5281/zenodo.10201288)
+
 This repository contains R code to reproduce the results presented in the preprint  
 
 > Allen, S., Ziegel, J. and Ginsbourger, D. (2023). 
@@ -7,7 +9,7 @@ This repository contains R code to reproduce the results presented in the prepri
 > ArXiv preprint.
 > [arxiv.2307.05846](https://arxiv.org/abs/2307.05846)
 
-Scripts to reproduce the results therein can be found in the _scripts_ repository.
+Scripts to reproduce the results therein can be found in the _scripts_ repository. 
 
 ## Forecast calibration
 
