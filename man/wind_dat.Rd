@@ -7,17 +7,17 @@
 \format{
 An object of type list containing 6 elements:
 \describe{
-  \item{obs}{Matrix of dimension (1045, 1056) containing the observed
+  \item{obs}{Array of dimension (1045, 33, 32) containing the observed
   wind speed for each date and grid point.}
-  \item{fc_ifs}{Array of dimension (1045, 1056, 11) containing the 11 IFS
+  \item{fc_ifs}{Array of dimension (1045, 33, 32, 11) containing the 11 IFS
   ensemble members at each date and grid point.}
-  \item{fc_ecc}{Array of dimension (1045, 1056, 11) containing the 11
+  \item{fc_ecc}{Array of dimension (1045, 33, 32, 11) containing the 11
   ensemble members obtained using ensemble copula coupling at each date
   and grid point.}
-  \item{fc_ss}{Array of dimension (1045, 1056, 11) containing the 11
+  \item{fc_ss}{Array of dimension (1045, 33, 32, 11) containing the 11
   ensemble members obtained using the Schaake shuffle at each date
   and grid point.}
-  \item{coord}{Latitude and longitude coordinates of the 1056 grid points.}
+  \item{coord}{Longitude and Latitude coordinates of the 1056 grid points.}
   \item{valtime}{Vector of dates for which the forecasts and observations
   are available.}
 }
@@ -34,12 +34,14 @@ post-processing benchmark dataset.
 }
 \details{
 Forecasts and observations are available on a grid over central Europe comprised
- of 33 longitudes and 32 latitudes.
+of 33 longitudes and 32 latitudes. These coordinates are available in \code{coord},
+with the first column containing the longitudes and the second column containing
+the latitudes.
 
-The forecasts are reforecasts from ECMWF's
-Integrated Forecasting System (IFS) with 11 ensemble members. Reforecasts are
-generated for the five years prior to each Monday and Thursday in 2017 and 2018.
-There are 209 Mondays and Thursdays in 2017 and 2018, resulting in 5*209=1045 forecast cases.
+The forecasts are reforecasts from ECMWF's Integrated Forecasting System (IFS)
+with 11 ensemble members. Reforecasts are generated for the five years prior to
+each Monday and Thursday in 2017 and 2018. There are 209 Mondays and Thursdays
+in 2017 and 2018, resulting in 5*209=1045 forecast cases.
 
 The observations are ERA5 reanalysis fields on the same gridded domain.
 
