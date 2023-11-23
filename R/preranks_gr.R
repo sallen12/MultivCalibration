@@ -27,6 +27,10 @@
 #' @seealso \link{preranks} for pre-rank functions for multivariate forecasts
 #'
 #' @details
+#' The observation are numeric matrices with d1 columns and d2 rows. It is assumed
+#' that the matrices are such that the [i, j] element of the matrix corresponds to the
+#' (i, j) of the resulting spatial field.
+#'
 #' The argument \code{prerank} specifies which pre-rank function to use. This can
 #' either be a string corresponding to one of several in-built options, or it can
 #' be a user-specified function.
@@ -184,13 +188,10 @@ iso_func <- function(x, h, p) {
     g_x <- sapply(h, iso_func, x = x, p = p)
     g_x <- sum(g_x)
   } else {
-    h <- h*rbind(c(0, 1), c(1, 0), c(1, 1), c(-1, 1))
-    g_x_vec <- apply(h, 1, vario_mat, y = x, p = p)
-    w_hv <- 1/(2*(g_x_vec[1]^2)/(nrow(x)*(ncol(x) - h)) + 2*(g_x_vec[2]^2)/(ncol(x)*(nrow(x) - h)))
-    w_di <- 1/(2*(g_x_vec[3]^2 + g_x_vec[4]^2)/((ncol(x) - h)*(nrow(x) - h)))
-    g_x_hv <- w_hv*(g_x_vec[1] - g_x_vec[2])^2
-    g_x_di <- w_di*(g_x_vec[3] - g_x_vec[4])^2
-    g_x <- -max(g_x_hv, g_x_di)
+    h_vec <- h*rbind(c(0, 1), c(1, 0))
+    g_x_vec <- apply(h_vec, 1, vario_mat, y = x, p = p)
+    a <- 1/((2*g_x_vec[1]^2)/(nrow(x)*(ncol(x) - h)) + (2*g_x_vec[2]^2)/(ncol(x)*(nrow(x) - h)))
+    g_x <- -a*(g_x_vec[1] - g_x_vec[2])^2
   }
   return(g_x)
 }
