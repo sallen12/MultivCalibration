@@ -184,7 +184,7 @@ get_evals <- function(r, lag, m, n0 = 1, strategy = "betabinom") {
   return(evals)
 }
 
-plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL, leg_pos = NULL) {
+plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL, leg_cols = FALSE) {
   mv_ranks <- list()
 
   mv_evals_ifs <- get_evals(r = mv_ranks_ifs, lag = 5, m = M, n0 = 20)
@@ -205,7 +205,7 @@ plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL,
                        expand = c(0, 0)) +
     theme_bw()
 
-  if (leg_pos == "right") {
+  if (leg_cols) {
     plt_prerank <- plt_prerank + theme(panel.grid = element_blank(), legend.title = element_blank(),
                                        legend.justification = c(1, 1), legend.position = c(0.99, 0.99)) +
       guides(col = guide_legend(ncol = 1))
@@ -225,7 +225,7 @@ plot_evals <- function(mv_ranks_ifs, mv_ranks_ecc, mv_ranks_ss, filename = NULL,
 
 plot_evals(rank_df_ifs$bdr, rank_df_ecc$bdr, rank_df_ss$bdr, filename = "scripts/fig_6a.pdf")
 plot_evals(rank_df_ifs$var, rank_df_ecc$var, rank_df_ss$var, filename = "scripts/fig_6b.pdf")
-plot_evals(rank_df_ifs$dep, rank_df_ecc$dep, rank_df_ss$dep, filename = "scripts/fig_6c.pdf", leg_pos = "right")
+plot_evals(rank_df_ifs$dep, rank_df_ecc$dep, rank_df_ss$dep, filename = "scripts/fig_6c.pdf", leg_cols =  TRUE)
 
 
 ##### spearman's rank correlation coefficient
