@@ -5,8 +5,10 @@ set.seed(1000)
 
 ##### set up
 
-# devtools::install_github("sallen12/WeightedForecastVerification")
+#devtools::install_github("sallen12/MultivCalibration")
+#devtools::install_github("sallen12/WeightedForecastVerification")
 library(MASS)
+library(ggplot2)
 library(WeightedForecastVerification)
 library(MultivCalibration)
 
@@ -17,7 +19,7 @@ sig2 <- 1       # scale parameter in data generating process
 phi <- 1        # correlation/range parameter in data generating process
 
 # create matrix with weights that decrease exponentially with the distance between dimensions
-w_mat <- exp(-1/abs(outer(1:d, 1:d, FUN = "-")))
+w_mat <- exp(-abs(outer(1:d, 1:d, FUN = "-")))
 
 
 ##### utility functions
