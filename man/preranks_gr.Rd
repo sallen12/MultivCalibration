@@ -29,6 +29,10 @@ and sample members (if \code{return_rank = F}).
 Calculate multivariate ranks of gridded forecasts and observations
 }
 \details{
+The observation are numeric matrices with d1 columns and d2 rows. It is assumed
+that the matrices are such that the [i, j] element of the matrix corresponds to the
+(i, j) of the resulting spatial field.
+
 The argument \code{prerank} specifies which pre-rank function to use. This can
 either be a string corresponding to one of several in-built options, or it can
 be a user-specified function.

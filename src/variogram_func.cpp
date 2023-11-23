@@ -59,9 +59,9 @@ double vario_mat(arma::mat y, arma::ivec h, double p){
   double nr = y.n_rows;
   double nc = y.n_cols;
   for (int i = 0; i < nr; i++) {
-    int ih = i + h[1];
+    int ih = i + h[0];
     for (int j = 0; j < nc; j++) {
-      int jh = j + h[0];
+      int jh = j + h[1];
       if ((ih < nr) && (ih >= 0) && (jh < nc) && (jh >= 0)) {
         double vy = pow(abs(y(i, j) - y(ih, jh)), p);
         count += 1;
