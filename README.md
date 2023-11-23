@@ -7,6 +7,8 @@ This repository contains R code to reproduce the results presented in the prepri
 > ArXiv preprint.
 > [arxiv.2307.05846](https://arxiv.org/abs/2307.05846)
 
+Scripts to reproduce the results therein can be found in the _scripts_ repository.
+
 ## Forecast calibration
 
 Loosely speaking, probabilistic forecasts are _calibrated_ if they align statistically with the corresponding outcomes. Calibration is a necessary property for forecasts to be considered trustworthy.
@@ -24,4 +26,3 @@ library(devtools)
 install_github("sallen12/MultivCalibration")
 ```
 The package is still in active development, and the vignette lists several possible extensions that could be implemented. Comments, suggestions, and input are more than welcome.
-
