@@ -5,7 +5,8 @@ set.seed(1000)
 
 ##### set up
 
-# devtools::install_github("sallen12/WeightedForecastVerification")
+#devtools::install_github("sallen12/MultivCalibration")
+#devtools::install_github("sallen12/WeightedForecastVerification")
 library(geoR)
 library(ggplot2)
 library(WeightedForecastVerification)
@@ -15,7 +16,7 @@ p <- q <- 30
 d <- p*q
 sig2 <- 1
 phi <- 1
-n <- 1000
+n <- 10000
 M <- 20
 
 # create array with weights that decrease exponentially with the distance between grid points
@@ -110,7 +111,7 @@ ylabs <- c("Average rank", "Band-depth", "Mean", "Variance", "Dependence", "FTE"
 y <- grf(d, grid = "reg", cov.pars = c(sig2, phi), nsim = n)
 coords <- y$coords*(d - 1)
 y <- aperm(array(y$data, c(p, q, n)), c(3, 1, 2))
-plot_grf(coords, as.vector(y[10, , ]))
+plot_grf(coords, as.vector(y[1, , ]))
 
 # Note: y[1, i, j] returns the (i, j) coordinate of the 1st field
 
@@ -119,19 +120,19 @@ plot_grf(coords, as.vector(y[10, , ]))
 
 ### Type 1: errors in the mean
 
-# a
-mu_x <- rep(-0.25, d)
-x <- grf(d, grid = "reg", cov.pars = c(sig2, phi), mean = mu_x, nsim = n*M)
-x <- aperm(array(x$data, c(p, q, M, n)), c(4, 1, 2, 3))
-rank_df <- get_ranks(y, x, w_mat)
-plot_ranks(rank_df, ylabs = ylabs)
+## a
+#mu_x <- rep(-0.25, d)
+#x <- grf(d, grid = "reg", cov.pars = c(sig2, phi), mean = mu_x, nsim = n*M)
+#x <- aperm(array(x$data, c(p, q, M, n)), c(4, 1, 2, 3))
+#rank_df <- get_ranks(y, x, w_mat)
+#plot_ranks(rank_df, ylabs = ylabs)
 
-# b
-mu_x <- rep(0.25, d)
-x <- grf(d, grid = "reg", cov.pars = c(sig2, phi), mean = mu_x, nsim = n*M)
-x <- aperm(array(x$data, c(p, q, M, n)), c(4, 1, 2, 3))
-rank_df <- get_ranks(y, x, w_mat)
-plot_ranks(rank_df, ylabs = ylabs)
+## b
+#mu_x <- rep(0.25, d)
+#x <- grf(d, grid = "reg", cov.pars = c(sig2, phi), mean = mu_x, nsim = n*M)
+#x <- aperm(array(x$data, c(p, q, M, n)), c(4, 1, 2, 3))
+#rank_df <- get_ranks(y, x, w_mat)
+#plot_ranks(rank_df, ylabs = ylabs)
 
 
 ### Type 2: errors in the variance
@@ -177,7 +178,8 @@ rank_df <- get_ranks(y, x, w_mat)
 plot_ranks(rank_df, filename = paste0(filedir, "2e", ".pdf"))
 
 # b
-y <- t(grf(d, grid = "reg", cov.pars = c(sig2, phi), aniso.pars = c(0, 1.1), nsim = n)$data)
+y <- grf(d, grid = "reg", cov.pars = c(sig2, phi), aniso.pars = c(0, 1.1), nsim = n)
+y <- aperm(array(y$data, c(p, q, n)), c(3, 1, 2))
 x <- grf(d, grid = "reg", cov.pars = c(sig2, phi), nsim = n*M)
 x <- aperm(array(x$data, c(p, q, M, n)), c(4, 1, 2, 3))
 rank_df <- get_ranks(y, x, w_mat)
